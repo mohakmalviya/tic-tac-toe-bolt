@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSequence,
-  withDelay,
   Easing
 } from 'react-native-reanimated';
 import { COLORS, SIZES } from '@/constants/theme';
@@ -28,7 +27,7 @@ const GamePiece: React.FC<GamePieceProps> = ({ type, isShadowed }) => {
       withTiming(1.1, { duration: 200, easing: Easing.out(Easing.back()) }),
       withTiming(1, { duration: 150 })
     );
-  }, []);
+  }, [scale]);
   
   // Animation for shadowed state
   useEffect(() => {
@@ -37,7 +36,7 @@ const GamePiece: React.FC<GamePieceProps> = ({ type, isShadowed }) => {
     } else {
       opacity.value = withTiming(1, { duration: 300 });
     }
-  }, [isShadowed]);
+  }, [isShadowed, opacity]);
   
   const animatedStyle = useAnimatedStyle(() => {
     return {

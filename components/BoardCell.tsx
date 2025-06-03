@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, SIZES } from '@/constants/theme';
 import GamePiece from './GamePiece';
 import { CellState } from '@/types/game';

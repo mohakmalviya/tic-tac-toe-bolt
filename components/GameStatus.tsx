@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { COLORS, FONTS, SIZES } from '@/constants/theme';
+import { COLORS, FONTS, SIZES, SHADOWS } from '@/constants/theme';
 import { X, Circle } from 'lucide-react-native';
 import { useGame } from '@/contexts/GameContext';
 

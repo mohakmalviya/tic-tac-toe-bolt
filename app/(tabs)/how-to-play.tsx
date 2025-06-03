@@ -28,16 +28,19 @@ export default function HowToPlayScreen() {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Special Rules</Text>
           <Text style={styles.ruleText}>
-            1. When a player places their 3rd piece, the opponent's oldest piece becomes "shadowed" (faded)
+            1. Each player can have a maximum of 3 pieces on the board at any time
           </Text>
           <Text style={styles.ruleText}>
-            2. When a player places their next piece after their opponent's piece becomes shadowed, the shadowed piece disappears from the board
+            2. Shadowing only occurs when BOTH players have 3 pieces on the board
           </Text>
           <Text style={styles.ruleText}>
-            3. This cycle continues, with the oldest piece of each player becoming shadowed and then removed
+            3. When the second player reaches 3 pieces, the first player's oldest piece becomes "shadowed" (faded and blocked)
           </Text>
           <Text style={styles.ruleText}>
-            4. A player can only win with 3 non-shadowed pieces in a row
+            4. When a player places their next piece, their own shadowed piece disappears from the board
+          </Text>
+          <Text style={styles.ruleText}>
+            5. A player can only win with 3 non-shadowed pieces in a row
           </Text>
         </View>
         
@@ -47,25 +50,28 @@ export default function HowToPlayScreen() {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Example</Text>
           <Text style={styles.exampleText}>
-            • Player X places first piece
+            • Player X places first piece (X: 1, O: 0)
           </Text>
           <Text style={styles.exampleText}>
-            • Player O places first piece
+            • Player O places first piece (X: 1, O: 1)
           </Text>
           <Text style={styles.exampleText}>
-            • Player X places second piece
+            • Player X places second piece (X: 2, O: 1)
           </Text>
           <Text style={styles.exampleText}>
-            • Player O places second piece
+            • Player O places second piece (X: 2, O: 2)
           </Text>
           <Text style={styles.exampleText}>
-            • Player X places third piece
+            • Player X places third piece (X: 3, O: 2)
           </Text>
           <Text style={styles.exampleText}>
-            • Player O places third piece (X's first piece becomes shadowed)
+            • Player O places third piece (X: 3, O: 3) → X's first piece becomes shadowed
           </Text>
           <Text style={styles.exampleText}>
-            • Player X places fourth piece (O's first piece becomes shadowed and X's first piece disappears)
+            • Player X places fourth piece → X's shadowed piece disappears, O's first piece becomes shadowed
+          </Text>
+          <Text style={styles.exampleText}>
+            • Player O places fourth piece → O's shadowed piece disappears, X's oldest piece becomes shadowed
           </Text>
           <Text style={styles.exampleText}>
             • And so on...

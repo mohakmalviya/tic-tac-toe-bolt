@@ -1,5 +1,10 @@
 export type PlayerType = 'X' | 'O';
 
+export type Position = {
+  row: number;
+  col: number;
+};
+
 export type CellState = {
   player: PlayerType | null;
   isShadowed: boolean;
@@ -14,6 +19,7 @@ export type GameState = {
   moveCount: number;
   gameOver: boolean;
   winner: PlayerType | 'draw' | null;
+  winningLine: Position[] | null;
   scores: {
     X: number;
     O: number;
