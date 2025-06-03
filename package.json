@@ -5,14 +5,19 @@
   "private": true,
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
+    "dev:multiplayer": "./start-dev.sh",
+    "server": "node server.js",
     "build:web": "expo export --platform web",
     "lint": "expo lint"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.2.3",
+    "@expo-google-fonts/poppins": "^0.2.3",
     "@expo/vector-icons": "^14.0.0",
     "@lucide/lab": "^0.1.2",
     "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/native": "^6.1.17",
+    "cors": "^2.8.5",
     "expo": "~51.0.28",
     "expo-blur": "~13.0.2",
     "expo-camera": "~15.0.13",
@@ -26,8 +31,7 @@
     "expo-status-bar": "~1.12.1",
     "expo-symbols": "~0.1.2",
     "expo-system-ui": "~3.0.7",
-    "@expo-google-fonts/inter": "^0.2.3",
-    "@expo-google-fonts/poppins": "^0.2.3",
+    "express": "^5.1.0",
     "lucide-react-native": "^0.475.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -39,13 +43,15 @@
     "react-native-svg": "15.2.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "~0.19.10",
-    "react-native-webview": "13.8.6"
+    "react-native-webview": "13.8.6",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.79",
-    "typescript": "~5.3.3",
     "eslint": "^8.57.0",
-    "eslint-config-expo": "~7.1.2"
+    "eslint-config-expo": "~7.1.2",
+    "typescript": "~5.3.3"
   }
 }

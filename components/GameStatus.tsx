@@ -3,9 +3,19 @@ import { StyleSheet, Text, View } from 'react-native';
 import { COLORS, FONTS, SIZES, SHADOWS } from '@/constants/theme';
 import { X, Circle } from 'lucide-react-native';
 import { useGame } from '@/contexts/GameContext';
+import { useMultiplayer } from '@/contexts/MultiplayerContext';
 
 const GameStatus: React.FC = () => {
-  const { gameState } = useGame();
+  const { gameState: localGameState } = useGame();
+  const { 
+    gameState: multiplayerGameState, 
+    roomId, 
+    playerRole, 
+    opponent 
+  } = useMultiplayer();
+
+  // Use multiplayer game state if we're in a room, otherwise use local
+  const gameState = roomId && multiplayerGameState ? multiplayerGameState : localGameState;
   const { currentPlayer, gameOver, winner, scores } = gameState;
   
   const getStatusMessage = () => {
@@ -13,10 +23,37 @@ const GameStatus: React.FC = () => {
       if (winner === 'draw') {
         return "It's a draw!";
       } else {
-        return `Player ${winner} wins!`;
+        if (roomId && playerRole) {
+          // Multiplayer mode
+          return winner === playerRole ? "You win!" : "You lose!";
+        } else {
+          // Local mode
+          return `Player ${winner} wins!`;
+        }
       }
     } else {
-      return `Player ${currentPlayer}'s turn`;
+      if (roomId && playerRole) {
+        // Multiplayer mode
+        return currentPlayer === playerRole ? "Your turn" : 
+               opponent ? `${opponent.name}'s turn` : "Waiting for opponent...";
+      } else {
+        // Local mode
+        return `Player ${currentPlayer}'s turn`;
+      }
+    }
+  };
+
+  const getPlayerLabel = (player: 'X' | 'O') => {
+    if (roomId && playerRole) {
+      // Multiplayer mode
+      if (player === playerRole) {
+        return "You";
+      } else {
+        return opponent ? opponent.name : "Opponent";
+      }
+    } else {
+      // Local mode
+      return `Player ${player}`;
     }
   };
   
@@ -38,16 +75,18 @@ const GameStatus: React.FC = () => {
       <View style={styles.scoreContainer}>
         <View style={styles.scoreBox}>
           <X color={COLORS.xColor} size={20} />
+          <Text style={styles.playerLabel}>{getPlayerLabel('X')}</Text>
           <Text style={styles.scoreText}>{scores.X}</Text>
         </View>
         
         <View style={styles.scoreBox}>
-          <Text style={styles.scoreText}>Draws</Text>
+          <Text style={styles.playerLabel}>Draws</Text>
           <Text style={styles.scoreText}>{scores.draws}</Text>
         </View>
         
         <View style={styles.scoreBox}>
           <Circle color={COLORS.oColor} size={20} />
+          <Text style={styles.playerLabel}>{getPlayerLabel('O')}</Text>
           <Text style={styles.scoreText}>{scores.O}</Text>
         </View>
       </View>
@@ -90,6 +129,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     minWidth: 70,
     ...SHADOWS.small,
+  },
+  playerLabel: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.small,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
   scoreText: {
     fontFamily: FONTS.medium,

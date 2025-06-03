@@ -4,9 +4,16 @@ import { COLORS, SHADOWS, SIZES } from '@/constants/theme';
 import BoardCell from './BoardCell';
 import WinningLine from './WinningLine';
 import { useGame } from '@/contexts/GameContext';
+import { useMultiplayer } from '@/contexts/MultiplayerContext';
 
 const GameBoard: React.FC = () => {
-  const { gameState, handleCellPress } = useGame();
+  const { gameState: localGameState, handleCellPress: localHandleCellPress } = useGame();
+  const { gameState: multiplayerGameState, makeMove: multiplayerMakeMove, roomId } = useMultiplayer();
+
+  // Use multiplayer game state if we're in a room, otherwise use local
+  const gameState = roomId && multiplayerGameState ? multiplayerGameState : localGameState;
+  const handleCellPress = roomId ? multiplayerMakeMove : localHandleCellPress;
+  
   const { board, winner, winningLine } = gameState;
 
   return (
