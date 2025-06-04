@@ -10,7 +10,7 @@ import {
   Poppins_700Bold
 } from '@expo-google-fonts/poppins';
 import { GameProvider } from '@/contexts/GameContext';
-import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
+import { SupabaseMultiplayerProvider } from '@/contexts/SupabaseMultiplayerContext';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -39,7 +39,7 @@ export default function RootLayout() {
   }
 
   return (
-    <MultiplayerProvider>
+    <SupabaseMultiplayerProvider>
       <GameProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -47,6 +47,6 @@ export default function RootLayout() {
         </Stack>
         <StatusBar style="auto" />
       </GameProvider>
-    </MultiplayerProvider>
+    </SupabaseMultiplayerProvider>
   );
 }

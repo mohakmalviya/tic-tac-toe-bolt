@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { COLORS, FONTS, SIZES, SHADOWS } from '@/constants/theme';
 import { X, Circle } from 'lucide-react-native';
 import { useGame } from '@/contexts/GameContext';
-import { useMultiplayer } from '@/contexts/MultiplayerContext';
+import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
 
 const GameStatus: React.FC = () => {
   const { gameState: localGameState } = useGame();
@@ -12,7 +12,7 @@ const GameStatus: React.FC = () => {
     roomId, 
     playerRole, 
     opponent 
-  } = useMultiplayer();
+  } = useSupabaseMultiplayer();
 
   // Use multiplayer game state if we're in a room, otherwise use local
   const gameState = roomId && multiplayerGameState ? multiplayerGameState : localGameState;

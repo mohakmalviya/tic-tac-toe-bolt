@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, FONTS, SHADOWS, SIZES } from '@/constants/theme';
 import { RefreshCw, RotateCcw } from 'lucide-react-native';
 import { useGame } from '@/contexts/GameContext';
-import { useMultiplayer } from '@/contexts/MultiplayerContext';
+import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
 
 type GameMode = 'local' | 'multiplayer';
 
@@ -13,11 +13,15 @@ interface GameControlsProps {
 
 const GameControls: React.FC<GameControlsProps> = ({ gameMode }) => {
   const { handleResetGame, handleResetAll } = useGame();
-  const { resetGame: resetMultiplayerGame, isHost } = useMultiplayer();
+  const { resetGame: resetMultiplayerGame, isHost } = useSupabaseMultiplayer();
   
-  const handleNewGame = () => {
+  const handleNewGame = async () => {
     if (gameMode === 'multiplayer') {
-      resetMultiplayerGame();
+      try {
+        await resetMultiplayerGame();
+      } catch (error) {
+        console.error('Error resetting multiplayer game:', error);
+      }
     } else {
       handleResetGame();
     }

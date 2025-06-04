@@ -25,6 +25,18 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="local-game"
+          options={{
+            href: null, // This hides it from the tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="multiplayer"
+          options={{
+            href: null, // This hides it from the tab bar
+          }}
+        />
+        <Tabs.Screen
           name="how-to-play"
           options={{
             title: 'How To Play',
