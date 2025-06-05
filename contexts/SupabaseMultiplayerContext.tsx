@@ -229,7 +229,7 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
               
               try {
                 // Create an empty board state for visual clearing
-                const emptyGameState = initializeGameState();
+                const emptyGameState = initializeGameState(true); // Start timer immediately for new game
                 // Preserve scores from current game
                 if (currentGameState) {
                   emptyGameState.scores = currentGameState.scores;
@@ -374,8 +374,8 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
 
       if (roomError) throw roomError;
 
-      // Create initial game state
-      const initialGameState = initializeGameState();
+      // Create initial game state with timer started
+      const initialGameState = initializeGameState(true);
       const { error: gameError } = await supabase
         .from('game_states')
         .insert({
@@ -621,9 +621,10 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
       }
     }
 
-    // Check if it's player's turn
+    // Check if it's player's turn - silently return instead of throwing error
     if (gameState.currentPlayer !== playerRole) {
-      throw new Error('Not your turn');
+      console.log('Not your turn - move ignored');
+      return;
     }
 
     // Check if cell is already occupied
@@ -632,8 +633,11 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
     }
 
     try {
-      // Calculate new game state
-      const newGameState = makeGameMove(gameState, row, col);
+      // Create server timestamp for consistent timer synchronization
+      const serverTimestamp = new Date();
+      
+      // Calculate new game state with server timestamp
+      const newGameState = makeGameMove(gameState, row, col, serverTimestamp);
       
       // Update local state immediately for responsive UI
       setGameState(newGameState);
@@ -673,7 +677,7 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
     try {
       console.log('Starting game reset...');
 
-      const newGameState = initializeGameState();
+      const newGameState = initializeGameState(true); // Start timer immediately for multiplayer
       // Preserve scores from current game
       if (gameState) {
         newGameState.scores = gameState.scores;

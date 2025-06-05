@@ -21,23 +21,34 @@ const GamePiece: React.FC<GamePieceProps> = ({ type, isShadowed, isMultiplayer =
   const scale = useSharedValue(0);
   const opacity = useSharedValue(1);
   
-  // Animation for piece appearance
+  // Animation for piece appearance - faster in multiplayer for better timer sync
   useEffect(() => {
-    scale.value = withSequence(
-      withTiming(0, { duration: 0 }),
-      withTiming(1.2, { duration: 250, easing: Easing.out(Easing.back()) }),
-      withTiming(1, { duration: 200 })
-    );
-  }, [scale]);
-  
-  // Animation for shadowed state
-  useEffect(() => {
-    if (isShadowed) {
-      opacity.value = withTiming(0.4, { duration: 400 });
+    if (isMultiplayer) {
+      // Faster animation for multiplayer to improve timer synchronization feel
+      scale.value = withSequence(
+        withTiming(0, { duration: 0 }),
+        withTiming(1.15, { duration: 150, easing: Easing.out(Easing.back()) }),
+        withTiming(1, { duration: 100 })
+      );
     } else {
-      opacity.value = withTiming(1, { duration: 400 });
+      // Standard animation for single player
+      scale.value = withSequence(
+        withTiming(0, { duration: 0 }),
+        withTiming(1.2, { duration: 250, easing: Easing.out(Easing.back()) }),
+        withTiming(1, { duration: 200 })
+      );
     }
-  }, [isShadowed, opacity]);
+  }, [scale, isMultiplayer]);
+  
+  // Animation for shadowed state - faster in multiplayer for responsiveness
+  useEffect(() => {
+    const duration = isMultiplayer ? 300 : 400;
+    if (isShadowed) {
+      opacity.value = withTiming(0.4, { duration });
+    } else {
+      opacity.value = withTiming(1, { duration });
+    }
+  }, [isShadowed, opacity, isMultiplayer]);
   
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -62,10 +73,10 @@ const GamePiece: React.FC<GamePieceProps> = ({ type, isShadowed, isMultiplayer =
 
   const colors = getColors();
 
-  // Get proper size for the icon - slightly smaller for Circle to account for stroke
+  // Get proper size for the icon - slightly smaller for Circle to prevent cutting
   const getIconSize = () => {
     const baseSize = SIZES.cellSize * 0.6;
-    return type === 'O' ? baseSize - 2 : baseSize;
+    return type === 'O' ? baseSize - 4 : baseSize;
   };
 
   // Get container style based on multiplayer mode
@@ -89,7 +100,7 @@ const GamePiece: React.FC<GamePieceProps> = ({ type, isShadowed, isMultiplayer =
           <Circle
             size={getIconSize()}
             color={isShadowed ? colors.shadowed : colors.normal}
-            strokeWidth={isMultiplayer ? SIZES.pieceStrokeWidth + 0.5 : SIZES.pieceStrokeWidth}
+            strokeWidth={isMultiplayer ? SIZES.pieceStrokeWidth : SIZES.pieceStrokeWidth - 0.5}
           />
         )}
       </Animated.View>

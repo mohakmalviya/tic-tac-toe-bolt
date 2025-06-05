@@ -12,7 +12,7 @@ export const initializeBoard = (): BoardState => {
 };
 
 // Initialize a new game state
-export const initializeGameState = (): GameState => {
+export const initializeGameState = (startTimer?: boolean): GameState => {
   return {
     board: initializeBoard(),
     currentPlayer: 'X',
@@ -24,7 +24,7 @@ export const initializeGameState = (): GameState => {
       X: 0,
       O: 0
     },
-    turnStartTime: undefined, // Timer starts on first move
+    turnStartTime: startTimer ? new Date() : undefined, // Timer starts immediately if specified, otherwise on first move
     turnTimeLimit: 15 // 15 seconds per turn
   };
 };
@@ -75,7 +75,7 @@ export const isBoardFull = (board: BoardState): boolean => {
 };
 
 // Handle making a move
-export const makeMove = (gameState: GameState, row: number, col: number): GameState => {
+export const makeMove = (gameState: GameState, row: number, col: number, serverTimestamp?: Date): GameState => {
   // If cell is already occupied or game is over
   if (gameState.board[row][col].player !== null || gameState.gameOver) {
     return gameState;
@@ -178,8 +178,8 @@ export const makeMove = (gameState: GameState, row: number, col: number): GameSt
   // The game continues until someone wins
   else {
     newGameState.currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-    // Reset turn timer for the next player
-    newGameState.turnStartTime = new Date();
+    // Reset turn timer for the next player using server timestamp if provided
+    newGameState.turnStartTime = serverTimestamp || new Date();
   }
   
   return newGameState;

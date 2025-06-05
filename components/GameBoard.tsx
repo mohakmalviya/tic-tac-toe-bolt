@@ -16,10 +16,11 @@ import Animated, {
 
 const GameBoard: React.FC = () => {
   const { gameState: localGameState, handleCellPress: localHandleCellPress } = useGame();
-  const { gameState: multiplayerGameState, makeMove: multiplayerMakeMove, roomId, opponent } = useSupabaseMultiplayer();
+  const { gameState: multiplayerGameState, makeMove: multiplayerMakeMove, roomId, opponent, playerRole } = useSupabaseMultiplayer();
 
   const gameState = roomId && multiplayerGameState ? multiplayerGameState : localGameState;
   const handleCellPress = roomId ? multiplayerMakeMove : localHandleCellPress;
+  const isCurrentPlayerTurn = roomId && multiplayerGameState ? multiplayerGameState.currentPlayer === playerRole : true;
   
   const { board, winner, winningLine } = gameState;
 
@@ -96,6 +97,7 @@ const GameBoard: React.FC = () => {
                       col={colIndex}
                       onPress={handleCellPress}
                       isMultiplayer={isMultiplayer}
+                      isCurrentPlayerTurn={isCurrentPlayerTurn}
                     />
                   ))}
                 </View>

@@ -17,9 +17,10 @@ interface BoardCellProps {
   col: number;
   onPress: (row: number, col: number) => void;
   isMultiplayer?: boolean;
+  isCurrentPlayerTurn?: boolean;
 }
 
-const BoardCell: React.FC<BoardCellProps> = ({ cell, row, col, onPress, isMultiplayer = false }) => {
+const BoardCell: React.FC<BoardCellProps> = ({ cell, row, col, onPress, isMultiplayer = false, isCurrentPlayerTurn = true }) => {
   const pressScale = useSharedValue(1);
   const hoverOpacity = useSharedValue(1);
 
@@ -62,7 +63,7 @@ const BoardCell: React.FC<BoardCellProps> = ({ cell, row, col, onPress, isMultip
   };
 
   const handlePressIn = () => {
-    if (!cell.player) {
+    if (!cell.player && (!isMultiplayer || isCurrentPlayerTurn)) {
       pressScale.value = withSpring(0.95);
       hoverOpacity.value = withTiming(0.8);
     }
@@ -85,7 +86,7 @@ const BoardCell: React.FC<BoardCellProps> = ({ cell, row, col, onPress, isMultip
         onPress={() => onPress(row, col)}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        activeOpacity={cell.player ? 1 : 0.8}
+        activeOpacity={cell.player ? 1 : (!isMultiplayer || isCurrentPlayerTurn) ? 0.8 : 1}
         disabled={cell.player !== null}
       >
         <LinearGradient
@@ -96,8 +97,8 @@ const BoardCell: React.FC<BoardCellProps> = ({ cell, row, col, onPress, isMultip
           }
           style={styles.cellGradient}
         >
-          {/* Hover effect for empty cells */}
-          {!cell.player && (
+          {/* Hover effect for empty cells - only show when it's player's turn in multiplayer */}
+          {!cell.player && (!isMultiplayer || isCurrentPlayerTurn) && (
             <LinearGradient
               colors={
                 isMultiplayer
