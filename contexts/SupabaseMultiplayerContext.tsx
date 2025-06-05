@@ -21,6 +21,8 @@ interface SupabaseMultiplayerContextType {
   onTurnTimeout: () => Promise<void>;
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
   isAutoRestarting: boolean;
+  isOpponentDisconnected: boolean;
+  continueWaitingForOpponent: () => void;
 }
 
 const SupabaseMultiplayerContext = createContext<SupabaseMultiplayerContextType | undefined>(undefined);
@@ -31,6 +33,13 @@ interface SupabaseMultiplayerProviderProps {
 
 // Generate a simple user ID for this session
 const generateUserId = () => `user_${Math.random().toString(36).substring(2, 15)}`;
+
+// Add a utility function for cleaning player names
+const cleanDisplayName = (name: string): string => {
+  if (!name) return '';
+  // Remove any version of the [RANDOM] tag
+  return name.replace(/\[RANDOM\][\s]*/gi, '');
+};
 
 export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderProps> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
@@ -46,6 +55,7 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
   const [roomCheckInterval, setRoomCheckInterval] = useState<NodeJS.Timeout | null>(null);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [isAutoRestarting, setIsAutoRestarting] = useState(false);
+  const [isOpponentDisconnected, setIsOpponentDisconnected] = useState(false);
   const autoRestartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use refs to avoid stale closures in intervals
@@ -109,14 +119,21 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           .single();
         
         if (room && !error) {
-          if (room.guest_id && room.guest_name && room.host_id === playerId) {
-            // Current user is host, guest is already there
-            setOpponent({ id: room.guest_id, name: room.guest_name });
-            console.log('Host found existing guest:', room.guest_name);
-          } else if (room.host_id && room.host_name && room.guest_id === playerId) {
-            // Current user is guest, host is already there
-            setOpponent({ id: room.host_id, name: room.host_name });
-            console.log('Guest found existing host:', room.host_name);
+          // Only set opponent if both host and guest slots are filled and we're not looking at ourselves
+          if (room.guest_id && room.guest_name && room.host_id && room.host_name) {
+            if (room.host_id === playerId) {
+              // Current user is host, guest is the opponent
+              setOpponent({ id: room.guest_id, name: room.guest_name });
+              console.log('Host found existing guest:', room.guest_name);
+            } else if (room.guest_id === playerId) {
+              // Current user is guest, host is the opponent
+              setOpponent({ id: room.host_id, name: room.host_name });
+              console.log('Guest found existing host:', room.host_name);
+            }
+          } else {
+            // Room is not full, no opponent yet
+            console.log('Room not full, no opponent set');
+            setOpponent(null);
           }
         }
       } catch (error) {
@@ -313,9 +330,159 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           if (room.guest_id && room.guest_name && room.host_id === playerId) {
             console.log('Host detected guest joined:', room.guest_name);
             setOpponent({ id: room.guest_id, name: room.guest_name });
+            setIsOpponentDisconnected(false);
+            
+            // For random matchmaking, reset the game when a new opponent joins
+            if (room.host_name?.includes('[RANDOM]') || room.guest_name?.includes('[RANDOM]')) {
+              console.log('Random match - new opponent joined, resetting game');
+              const initialGameState = initializeGameState(true);
+              // Preserve scores if there was a previous game
+              if (gameStateRef.current) {
+                initialGameState.scores = gameStateRef.current.scores;
+              }
+              
+              // Update game state in database
+              try {
+                await supabase
+                  .from('game_states')
+                  .update({
+                    board: initialGameState.board,
+                    current_player: initialGameState.currentPlayer,
+                    move_count: initialGameState.moveCount,
+                    game_over: initialGameState.gameOver,
+                    winner: initialGameState.winner,
+                    winning_line: initialGameState.winningLine,
+                    scores: initialGameState.scores,
+                    turn_start_time: initialGameState.turnStartTime?.toISOString() || null,
+                    turn_time_limit: initialGameState.turnTimeLimit,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('room_id', roomId);
+              } catch (error) {
+                console.error('Error resetting game after new opponent joined:', error);
+              }
+            }
           } else if (room.host_id && room.host_name && room.guest_id === playerId) {
             console.log('Guest detected host via real-time:', room.host_name);
             setOpponent({ id: room.host_id, name: room.host_name });
+            setIsOpponentDisconnected(false);
+          }
+          
+          // Handle opponent disconnection
+          if (room.host_id === playerId && !room.guest_id && opponentRef.current) {
+            console.log('Host detected guest left - had opponent:', opponentRef.current?.name);
+            
+            // Trigger disconnection for ANY game where we had an opponent
+            setOpponent(null);
+            if (!isOpponentDisconnected) { // Only trigger if not already disconnected
+              setIsOpponentDisconnected(true);
+              
+              // For random matchmaking, reset the game state for the remaining player
+              if (room.host_name?.includes('[RANDOM]')) {
+                console.log('Random match - guest left, resetting game state');
+                
+                // Reset the game state for the remaining player
+                const initialGameState = initializeGameState(true);
+                // Preserve scores
+                if (gameStateRef.current) {
+                  initialGameState.scores = gameStateRef.current.scores;
+                }
+                
+                // Update game state
+                setGameState(initialGameState);
+                
+                // Update game state in database
+                try {
+                  await supabase
+                    .from('game_states')
+                    .update({
+                      board: initialGameState.board,
+                      current_player: initialGameState.currentPlayer,
+                      move_count: initialGameState.moveCount,
+                      game_over: initialGameState.gameOver,
+                      winner: initialGameState.winner,
+                      winning_line: initialGameState.winningLine,
+                      scores: initialGameState.scores,
+                      turn_start_time: initialGameState.turnStartTime?.toISOString() || null,
+                      turn_time_limit: initialGameState.turnTimeLimit,
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('room_id', roomId);
+                } catch (error) {
+                  console.error('Error resetting game after opponent left:', error);
+                }
+              } else {
+                console.log('Regular game - guest left, showing disconnection popup');
+              }
+            }
+          } else if (room.guest_id === playerId && !room.host_id && opponentRef.current) {
+            console.log('Guest detected host left - had opponent:', opponentRef.current?.name);
+            
+            // Trigger disconnection for ANY game where we had an opponent
+            setOpponent(null);
+            if (!isOpponentDisconnected) { // Only trigger if not already disconnected
+              setIsOpponentDisconnected(true);
+              
+              // For random matchmaking, reset the game state for the remaining player
+              if (room.guest_name?.includes('[RANDOM]')) {
+                console.log('Random match - host left, resetting game state');
+                
+                // Reset the game state for the remaining player
+                const initialGameState = initializeGameState(true);
+                // Preserve scores
+                if (gameStateRef.current) {
+                  initialGameState.scores = gameStateRef.current.scores;
+                }
+                
+                // Update game state
+                setGameState(initialGameState);
+                
+                // Update game state in database
+                try {
+                  await supabase
+                    .from('game_states')
+                    .update({
+                      board: initialGameState.board,
+                      current_player: initialGameState.currentPlayer,
+                      move_count: initialGameState.moveCount,
+                      game_over: initialGameState.gameOver,
+                      winner: initialGameState.winner,
+                      winning_line: initialGameState.winningLine,
+                      scores: initialGameState.scores,
+                      turn_start_time: initialGameState.turnStartTime?.toISOString() || null,
+                      turn_time_limit: initialGameState.turnTimeLimit,
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('room_id', roomId);
+                } catch (error) {
+                  console.error('Error resetting game after host left:', error);
+                }
+              } else {
+                console.log('Regular game - host left, showing disconnection popup');
+              }
+            }
+          }
+          
+          // Check if room is now completely empty and delete it
+          if (!room.host_id && !room.guest_id) {
+            console.log('Room is completely empty, deleting it immediately');
+            // Delete game state first
+            try {
+              await supabase
+                .from('game_states')
+                .delete()
+                .eq('room_id', roomId);
+              
+              // Delete room
+              await supabase
+                .from('rooms')
+                .delete()
+                .eq('id', roomId);
+              
+              console.log('Empty room deleted successfully:', roomId);
+            } catch (error) {
+              console.error('Error deleting empty room:', error);
+            }
           }
         }
       )
@@ -353,11 +520,105 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   };
 
+  // Define a helper function for joining a random match
+  const joinExistingRoom = async (roomId: string, playerName: string) => {
+    // Check if room exists and has space
+    const { data: room, error: fetchError } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomId)
+      .single();
+
+    if (fetchError) throw new Error('Room not found');
+    if (!room) throw new Error('Room not found');
+    if (room.guest_id) throw new Error('Room is full');
+
+    // Join the room
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({
+        guest_id: playerId,
+        guest_name: playerName,
+        status: 'playing'
+      })
+      .eq('id', roomId);
+
+    if (updateError) throw updateError;
+
+    // Get current game state
+    const { data: gameState, error: gameError } = await supabase
+      .from('game_states')
+      .select('*')
+      .eq('room_id', roomId)
+      .single();
+
+    if (gameError || !gameState) throw new Error('Failed to load game state');
+
+    // Set local state first
+    setRoomId(roomId);
+    setPlayerRole('O');
+    setIsHost(false);
+    setOpponent({ id: room.host_id, name: room.host_name });
+    setGameState({
+      board: gameState.board,
+      currentPlayer: gameState.current_player,
+      moveCount: gameState.move_count,
+      gameOver: gameState.game_over,
+      winner: gameState.winner as any,
+      winningLine: gameState.winning_line,
+      scores: gameState.scores,
+      turnStartTime: gameState.turn_start_time ? new Date(gameState.turn_start_time) : new Date(),
+      turnTimeLimit: gameState.turn_time_limit || 15
+    });
+    setCurrentPlayerName(cleanDisplayName(playerName));
+
+    // Then subscribe to room updates
+    subscribeToRoom(roomId);
+  };
+
   const createRoom = useCallback(async (playerName: string) => {
     try {
       // Clean up any existing subscription first
       if (roomChannel || roomCheckInterval) {
         unsubscribeFromRoom();
+      }
+
+      // Reset opponent and disconnection state
+      setOpponent(null);
+      setIsOpponentDisconnected(false);
+
+      // Check if this is a request for random matchmaking
+      const isRandomMatch = playerName.startsWith('[RANDOM]');
+      const actualPlayerName = isRandomMatch ? playerName.replace('[RANDOM] ', '') : playerName;
+      
+      if (isRandomMatch) {
+        // First, check if there are any open rooms waiting for random matches
+        const { data: availableRooms, error: roomsError } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('status', 'waiting')
+          .is('guest_id', null)
+          .ilike('host_name', '%[RANDOM]%');
+        
+        if (roomsError) throw roomsError;
+        
+        // If we found an available random match room, join it
+        if (availableRooms && availableRooms.length > 0) {
+          const roomToJoin = availableRooms[0];
+          console.log('Found random match room to join:', roomToJoin.id);
+          
+          // Join as guest
+          try {
+            await joinExistingRoom(roomToJoin.id, actualPlayerName);
+            return; // Successfully joined existing room
+          } catch (error) {
+            console.log('Failed to join random room, creating new one instead:', error);
+            // Continue with creating a new room
+          }
+        }
+        
+        // No available rooms, create a new one for random matching
+        console.log('No available random match rooms, creating new one');
       }
 
       const newRoomId = generateRoomId();
@@ -398,7 +659,7 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
       setPlayerRole('X');
       setIsHost(true);
       setGameState(initialGameState);
-      setCurrentPlayerName(playerName);
+      setCurrentPlayerName(cleanDisplayName(actualPlayerName));
 
       // Then subscribe to room updates
       subscribeToRoom(newRoomId);
@@ -415,58 +676,11 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
         unsubscribeFromRoom();
       }
 
-      // Check if room exists and has space
-      const { data: room, error: fetchError } = await supabase
-        .from('rooms')
-        .select('*')
-        .eq('id', roomId)
-        .single();
+      // Reset opponent and disconnection state
+      setOpponent(null);
+      setIsOpponentDisconnected(false);
 
-      if (fetchError) throw new Error('Room not found');
-      if (!room) throw new Error('Room not found');
-      if (room.guest_id) throw new Error('Room is full');
-
-      // Join the room
-      const { error: updateError } = await supabase
-        .from('rooms')
-        .update({
-          guest_id: playerId,
-          guest_name: playerName,
-          status: 'playing'
-        })
-        .eq('id', roomId);
-
-      if (updateError) throw updateError;
-
-      // Get current game state
-      const { data: gameState, error: gameError } = await supabase
-        .from('game_states')
-        .select('*')
-        .eq('room_id', roomId)
-        .single();
-
-      if (gameError || !gameState) throw new Error('Failed to load game state');
-
-      // Set local state first
-      setRoomId(roomId);
-      setPlayerRole('O');
-      setIsHost(false);
-      setOpponent({ id: room.host_id, name: room.host_name });
-      setGameState({
-        board: gameState.board,
-        currentPlayer: gameState.current_player,
-        moveCount: gameState.move_count,
-        gameOver: gameState.game_over,
-        winner: gameState.winner as any,
-        winningLine: gameState.winning_line,
-        scores: gameState.scores,
-        turnStartTime: gameState.turn_start_time ? new Date(gameState.turn_start_time) : new Date(),
-        turnTimeLimit: gameState.turn_time_limit || 15
-      });
-      setCurrentPlayerName(playerName);
-
-      // Then subscribe to room updates
-      subscribeToRoom(roomId);
+      await joinExistingRoom(roomId, playerName);
     } catch (error) {
       console.error('Error joining room:', error);
       throw error;
@@ -490,8 +704,142 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
       
       unsubscribeFromRoom();
 
-      // Always delete room and game state data when anyone leaves
-      await cleanupRoom(roomId);
+      // Check if this is a random matchmaking room
+      const { data: room, error: roomError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', roomId)
+        .single();
+      
+      if (roomError) {
+        console.error('Error fetching room data during leave:', roomError);
+        // Proceed with cleanup as normal
+        await cleanupRoom(roomId);
+      } else if (room) {
+        const isRandomRoom = room.host_name?.includes('[RANDOM]') || 
+                            (room.guest_name?.includes('[RANDOM]'));
+        
+        // Determine if current player is host or guest based on actual room data
+        const isCurrentPlayerHost = room.host_id === playerId;
+        const isCurrentPlayerGuest = room.guest_id === playerId;
+        
+        console.log('Leave room analysis:', {
+          playerId,
+          roomHostId: room.host_id,
+          roomGuestId: room.guest_id,
+          isCurrentPlayerHost,
+          isCurrentPlayerGuest,
+          isRandomRoom
+        });
+        
+        if (isRandomRoom) {
+          // For random matchmaking, handle player leaving logic
+          if (isCurrentPlayerHost) {
+            // Current player is the host and leaving
+            if (room.guest_id) {
+              console.log('Host leaving random room with guest present, transferring host role');
+              // Transfer host role to guest and remove self
+              const { error: transferError } = await supabase
+                .from('rooms')
+                .update({
+                  host_id: room.guest_id,
+                  host_name: room.guest_name,
+                  guest_id: null,
+                  guest_name: null,
+                  status: 'waiting'
+                })
+                .eq('id', roomId);
+              
+              if (transferError) {
+                console.error('Error transferring host role:', transferError);
+                // If transfer fails, clean up the room
+                await cleanupRoom(roomId);
+              } else {
+                console.log('Host role transferred successfully');
+              }
+            } else {
+              // No guest, room will be empty after host leaves - clean up the room
+              console.log('Host leaving empty random room, cleaning up');
+              await cleanupRoom(roomId);
+            }
+          } else if (isCurrentPlayerGuest) {
+            // Current player is the guest and leaving
+            console.log('Guest leaving random room');
+            const { error: updateError } = await supabase
+              .from('rooms')
+              .update({
+                guest_id: null,
+                guest_name: null,
+                status: 'waiting'
+              })
+              .eq('id', roomId);
+            
+            if (updateError) {
+              console.error('Error removing guest:', updateError);
+              // If update fails, try to clean up the room
+              await cleanupRoom(roomId);
+            } else {
+              console.log('Guest removed successfully');
+              // After removing guest, check if there's still a host
+              if (!room.host_id) {
+                console.log('No host in room after guest left, cleaning up');
+                await cleanupRoom(roomId);
+              }
+            }
+          } else {
+            // Player is neither host nor guest (shouldn't happen, but handle it)
+            console.warn('Player is neither host nor guest in room, cleaning up');
+            await cleanupRoom(roomId);
+          }
+          
+          // Only reset game state if there's still a player in the room
+          // Check room state after updates
+          const { data: updatedRoom, error: roomCheckError } = await supabase
+            .from('rooms')
+            .select('*')
+            .eq('id', roomId)
+            .single();
+          
+          if (!roomCheckError && updatedRoom && (updatedRoom.host_id || updatedRoom.guest_id)) {
+            // Room still has a player, reset game state for them
+            console.log('Room still has players, resetting game state');
+            if (gameState) {
+              const initialGameState = initializeGameState(true);
+              // Preserve scores
+              initialGameState.scores = gameState.scores;
+              
+              const { error: gameStateError } = await supabase
+                .from('game_states')
+                .update({
+                  board: initialGameState.board,
+                  current_player: initialGameState.currentPlayer,
+                  move_count: initialGameState.moveCount,
+                  game_over: initialGameState.gameOver,
+                  winner: initialGameState.winner,
+                  winning_line: initialGameState.winningLine,
+                  scores: initialGameState.scores,
+                  turn_start_time: initialGameState.turnStartTime?.toISOString() || null,
+                  turn_time_limit: initialGameState.turnTimeLimit,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('room_id', roomId);
+              
+              if (gameStateError) {
+                console.error('Error resetting game state:', gameStateError);
+              }
+            }
+          } else {
+            console.log('Room is empty or error occurred, no game state reset needed');
+          }
+        } else {
+          // For regular games, always clean up the room
+          console.log('Regular game room, cleaning up');
+          await cleanupRoom(roomId);
+        }
+      } else {
+        // Room not found, no need to clean up
+        console.log('Room not found during leave, skipping cleanup');
+      }
 
       // Reset local state
       setRoomId(null);
@@ -500,12 +848,14 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
       setOpponent(null);
       setGameState(null);
       setCurrentPlayerName(null);
+      setIsOpponentDisconnected(false); // Reset disconnection state
+      console.log('All local state reset, including isOpponentDisconnected set to false');
     } catch (error) {
       console.error('Error leaving room:', error);
     } finally {
       setIsCleaningUp(false);
     }
-  }, [roomId, unsubscribeFromRoom, isCleaningUp]);
+  }, [roomId, unsubscribeFromRoom, isCleaningUp, playerId, gameState]);
 
   // Helper function to cleanup room data
   const cleanupRoom = async (roomIdToClean: string) => {
@@ -793,6 +1143,11 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
     };
   }, []);
 
+  // Add the function to continue waiting for opponent
+  const continueWaitingForOpponent = useCallback(() => {
+    setIsOpponentDisconnected(false);
+  }, []);
+
   const value: SupabaseMultiplayerContextType = {
     isConnected,
     roomId,
@@ -810,6 +1165,8 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
     onTurnTimeout,
     connectionStatus,
     isAutoRestarting,
+    isOpponentDisconnected,
+    continueWaitingForOpponent,
   };
 
   return (

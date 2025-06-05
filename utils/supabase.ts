@@ -66,6 +66,7 @@ export interface Room {
   guest_id?: string;
   guest_name?: string;
   status: 'waiting' | 'playing' | 'finished';
+  room_type: 'random' | 'friends';
   created_at: string;
 }
 

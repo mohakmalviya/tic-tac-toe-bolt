@@ -18,6 +18,12 @@ interface MultiplayerLobbyProps {
   onGameModeChange: (mode: GameMode) => void;
 }
 
+const cleanPlayerName = (name: string): string => {
+  if (!name) return '';
+  // Remove any version of the [RANDOM] tag with case insensitivity and global flag
+  return name.replace(/\[RANDOM\][\s]*/gi, '');
+};
+
 export default function MultiplayerLobby({ gameMode, onGameModeChange }: MultiplayerLobbyProps) {
   const [playerName, setPlayerName] = useState('');
   const [roomIdInput, setRoomIdInput] = useState('');
@@ -130,7 +136,7 @@ export default function MultiplayerLobby({ gameMode, onGameModeChange }: Multipl
         <View style={styles.roomInfo}>
           <Text style={styles.roomIdText}>Room ID: {roomId}</Text>
           {opponent ? (
-            <Text style={styles.opponentText}>Playing against: {opponent.name}</Text>
+            <Text style={styles.opponentText}>Playing against: {cleanPlayerName(opponent.name)}</Text>
           ) : (
             <Text style={styles.waitingText}>Waiting for opponent...</Text>
           )}

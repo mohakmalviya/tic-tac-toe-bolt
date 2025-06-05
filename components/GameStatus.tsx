@@ -8,6 +8,12 @@ interface GameStatusProps {
   // No props needed if it just reads from context
 }
 
+const cleanPlayerName = (name: string): string => {
+  if (!name) return '';
+  // Remove any version of the [RANDOM] tag with case insensitivity and global flag
+  return name.replace(/\[RANDOM\][\s]*/gi, '');
+};
+
 const GameStatus: React.FC<GameStatusProps> = () => {
   const { gameState: localGameState } = useGame();
   const { 
@@ -15,11 +21,16 @@ const GameStatus: React.FC<GameStatusProps> = () => {
     roomId, 
     playerRole, 
     opponent,
-    isAutoRestarting
+    isAutoRestarting,
+    currentPlayerName
   } = useSupabaseMultiplayer();
 
   const gameState = roomId && multiplayerGameState ? multiplayerGameState : localGameState;
   const { currentPlayer, gameOver, winner } = gameState;
+  
+  // Check if this is a random match
+  const isRandomMatch = currentPlayerName?.includes('[RANDOM]') || 
+                        opponent?.name?.includes('[RANDOM]');
   
   const getStatusMessage = (): string => {
     if (gameOver) {
@@ -36,6 +47,10 @@ const GameStatus: React.FC<GameStatusProps> = () => {
     } else {
       if (roomId) {
         if (!opponent) {
+          // Special message for random matchmaking when waiting
+          if (isRandomMatch) {
+            return "Random matchmaking - Waiting for new opponent...";
+          }
           return "Waiting for opponent...";
         }
         if (gameState.moveCount === 0) {
@@ -43,10 +58,10 @@ const GameStatus: React.FC<GameStatusProps> = () => {
             return "New game started!";
           }
           return currentPlayer === playerRole ? "Your turn - Make the first move!" : 
-                 `Waiting for ${opponent.name} to start...`;
+                 `Waiting for ${opponent ? cleanPlayerName(opponent.name) : 'opponent'} to start...`;
         }
         return currentPlayer === playerRole ? "Your turn" : 
-               `${opponent?.name || 'Opponent'}'s turn`;
+               `${opponent ? cleanPlayerName(opponent.name) : 'Opponent'}'s turn`;
       } else {
         return `Player ${currentPlayer}'s turn`;
       }
