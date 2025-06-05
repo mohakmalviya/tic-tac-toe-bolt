@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
-import { useMultiplayer } from '@/contexts/MultiplayerContext';
+import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
 
 type GameMode = 'local' | 'multiplayer';
 
@@ -31,19 +31,14 @@ export default function MultiplayerLobby({ gameMode, onGameModeChange }: Multipl
     joinRoom, 
     leaveRoom, 
     opponent,
-    connectionStatus,
-    connectToServer,
-    disconnectFromServer
-  } = useMultiplayer();
+    connectionStatus
+  } = useSupabaseMultiplayer();
 
   // Connect to server when switching to multiplayer mode
   useEffect(() => {
-    if (gameMode === 'multiplayer') {
-      connectToServer();
-    } else {
-      disconnectFromServer();
-    }
-  }, [gameMode, connectToServer, disconnectFromServer]);
+    // Supabase connection is handled automatically in the context
+    // No manual connect/disconnect needed
+  }, [gameMode]);
 
   const handleCreateRoom = async () => {
     if (!playerName.trim()) {
@@ -58,7 +53,7 @@ export default function MultiplayerLobby({ gameMode, onGameModeChange }: Multipl
 
     setIsCreatingRoom(true);
     try {
-      createRoom(playerName.trim());
+      await createRoom(playerName.trim());
     } catch (error) {
       Alert.alert('Error', 'Failed to create room');
     } finally {
@@ -84,7 +79,7 @@ export default function MultiplayerLobby({ gameMode, onGameModeChange }: Multipl
 
     setIsJoiningRoom(true);
     try {
-      joinRoom(roomIdInput.trim().toUpperCase(), playerName.trim());
+      await joinRoom(roomIdInput.trim().toUpperCase(), playerName.trim());
     } catch (error) {
       Alert.alert('Error', 'Failed to join room');
     } finally {
@@ -97,7 +92,6 @@ export default function MultiplayerLobby({ gameMode, onGameModeChange }: Multipl
   };
 
   const handleSwitchToLocal = () => {
-    disconnectFromServer();
     onGameModeChange('local');
   };
 

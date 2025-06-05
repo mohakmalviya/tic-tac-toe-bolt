@@ -34,27 +34,15 @@ const GameControls: React.FC<GameControlsProps> = ({ gameMode }) => {
     // In multiplayer, we don't allow resetting all scores through the client
   };
 
-  // In multiplayer mode, only show new game button and only for the host
+  // In multiplayer mode, don't show any buttons - games auto-restart
   if (gameMode === 'multiplayer') {
     return (
       <View style={styles.container}>
-        {isHost && (
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={handleNewGame}
-            activeOpacity={0.8}
-          >
-            <RefreshCw size={20} color={COLORS.white} />
-            <Text style={styles.buttonText}>New Game</Text>
-          </TouchableOpacity>
-        )}
-        {!isHost && (
-          <View style={styles.waitingContainer}>
-            <Text style={styles.waitingText}>
-              Waiting for host to start new game...
-            </Text>
-          </View>
-        )}
+        <View style={styles.autoRestartInfo}>
+          <Text style={styles.infoText}>
+            Games restart automatically after someone wins
+          </Text>
+        </View>
       </View>
     );
   }
@@ -90,7 +78,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: SIZES.medium,
-    marginTop: SIZES.large,
   },
   button: {
     flexDirection: 'row',
@@ -121,6 +108,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIZES.large,
   },
   waitingText: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.small,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  autoRestartInfo: {
+    paddingVertical: SIZES.xSmall,
+    paddingHorizontal: SIZES.large,
+  },
+  infoText: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.small,
     color: COLORS.textSecondary,

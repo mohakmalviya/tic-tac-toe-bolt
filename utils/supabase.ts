@@ -1,21 +1,62 @@
 import { createClient } from '@supabase/supabase-js';
 
-// 🔑 Supabase configuration
-// Option 1: Use environment variables (recommended)
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+// 🔑 Supabase configuration with fallbacks
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Option 2: Replace the values above directly if not using .env file
-// const supabaseUrl = 'https://xxxxxxxxxxxxxxxxxx.supabase.co';
-// const supabaseAnonKey = 'your-anon-key-here';
+// Check if Supabase credentials are available
+const isSupabaseConfigured = supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && 
+                            supabaseAnonKey && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
-});
+let supabase: any = null;
+
+try {
+  if (isSupabaseConfigured) {
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+    });
+  } else {
+    // Create a mock client to prevent crashes
+    console.warn('Supabase not configured, using mock client');
+    supabase = {
+      from: () => ({
+        select: () => ({ error: new Error('Supabase not configured') }),
+        insert: () => ({ error: new Error('Supabase not configured') }),
+        update: () => ({ error: new Error('Supabase not configured') }),
+        delete: () => ({ error: new Error('Supabase not configured') }),
+        single: () => ({ error: new Error('Supabase not configured') }),
+      }),
+      channel: () => ({
+        on: () => ({ subscribe: () => {} }),
+        subscribe: () => {},
+        unsubscribe: () => {},
+      }),
+    };
+  }
+} catch (error) {
+  console.error('Failed to initialize Supabase:', error);
+  // Create mock client as fallback
+  supabase = {
+    from: () => ({
+      select: () => ({ error: new Error('Supabase initialization failed') }),
+      insert: () => ({ error: new Error('Supabase initialization failed') }),
+      update: () => ({ error: new Error('Supabase initialization failed') }),
+      delete: () => ({ error: new Error('Supabase initialization failed') }),
+      single: () => ({ error: new Error('Supabase initialization failed') }),
+    }),
+    channel: () => ({
+      on: () => ({ subscribe: () => {} }),
+      subscribe: () => {},
+      unsubscribe: () => {},
+    }),
+  };
+}
+
+export { supabase, isSupabaseConfigured };
 
 // Database types for TypeScript
 export interface Room {
@@ -41,5 +82,7 @@ export interface GameStateDB {
     O: number;
     draws: number;
   };
+  turn_start_time?: string; // When the current turn started
+  turn_time_limit: number; // Time limit per turn in seconds (default 15)
   updated_at: string;
 } 

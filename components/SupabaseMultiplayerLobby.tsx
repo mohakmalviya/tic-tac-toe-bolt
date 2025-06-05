@@ -9,12 +9,14 @@ import {
   ActivityIndicator,
   Clipboard,
 } from 'react-native';
-import { COLORS, FONTS, SIZES } from '@/constants/theme';
+import { FONTS, SIZES, SHADOWS } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Copy, Users, Wifi } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
 
 export default function SupabaseMultiplayerLobby() {
+  const { theme } = useTheme();
   const [playerName, setPlayerName] = useState('');
   const [joinPlayerName, setJoinPlayerName] = useState('');
   const [roomIdInput, setRoomIdInput] = useState('');
@@ -97,61 +99,69 @@ export default function SupabaseMultiplayerLobby() {
   if (roomId) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={[COLORS.primary + '20', COLORS.primary + '10', COLORS.white]}
-          style={styles.roomCard}
-        >
-          <View style={styles.roomHeader}>
-            <Wifi size={24} color={COLORS.success} />
-            <Text style={styles.roomTitle}>Room Created Successfully!</Text>
-          </View>
-          
-          <View style={styles.roomIdContainer}>
-            <Text style={styles.roomIdLabel}>Share this Room Code:</Text>
-            <TouchableOpacity style={styles.roomCodeBox} onPress={copyRoomId}>
-              <Text style={styles.roomIdText}>{roomId}</Text>
-              <Copy size={20} color={COLORS.primary} />
+        <View style={[styles.roomCard, { 
+          backgroundColor: theme.cardBackground,
+          shadowColor: theme.shadowPiece
+        }, SHADOWS.medium]}>
+          <LinearGradient
+            colors={[theme.primary + '20', theme.primary + '10', theme.cardBackground]}
+            style={styles.roomCardGradient}
+          >
+            <View style={styles.roomHeader}>
+              <Wifi size={24} color={theme.success} />
+              <Text style={[styles.roomTitle, { color: theme.textPrimary }]}>Room Created Successfully!</Text>
+            </View>
+            
+            <View style={styles.roomIdContainer}>
+              <Text style={[styles.roomIdLabel, { color: theme.textSecondary }]}>Share this Room Code:</Text>
+              <TouchableOpacity style={[styles.roomCodeBox, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]} onPress={copyRoomId}>
+                <Text style={[styles.roomIdText, { color: theme.primary }]}>{roomId}</Text>
+                <Copy size={20} color={theme.primary} />
+              </TouchableOpacity>
+              <Text style={[styles.roomIdSubtext, { color: theme.textSecondary }]}>Tap the code to copy • Share with friends to play</Text>
+            </View>
+            
+            {opponent ? (
+              <View style={[styles.playerStatus, { backgroundColor: theme.success + '15' }]}>
+                <View style={[styles.statusIndicator, { backgroundColor: theme.success }]} />
+                <Text style={[styles.opponentText, { color: theme.textPrimary }]}>🎮 Playing against: {opponent.name}</Text>
+              </View>
+            ) : (
+              <View style={[styles.waitingContainer, { backgroundColor: theme.warning + '15' }]}>
+                <ActivityIndicator size="small" color={theme.warning} />
+                <Text style={[styles.waitingText, { color: theme.textPrimary }]}>Waiting for opponent to join...</Text>
+                <Text style={[styles.waitingSubtext, { color: theme.textSecondary }]}>Game will start automatically when someone joins</Text>
+              </View>
+            )}
+            
+            <TouchableOpacity style={[styles.leaveButton, { backgroundColor: theme.error }]} onPress={handleLeaveRoom}>
+              <Text style={[styles.leaveButtonText, { color: theme.textInverse }]}>Leave Room</Text>
             </TouchableOpacity>
-            <Text style={styles.roomIdSubtext}>Tap the code to copy • Share with friends to play</Text>
-          </View>
-          
-          {opponent ? (
-            <View style={styles.playerStatus}>
-              <View style={styles.statusIndicator} />
-              <Text style={styles.opponentText}>🎮 Playing against: {opponent.name}</Text>
-            </View>
-          ) : (
-            <View style={styles.waitingContainer}>
-              <ActivityIndicator size="small" color={COLORS.warning} />
-              <Text style={styles.waitingText}>Waiting for opponent to join...</Text>
-              <Text style={styles.waitingSubtext}>Game will start automatically when someone joins</Text>
-            </View>
-          )}
-          
-          <TouchableOpacity style={styles.leaveButton} onPress={handleLeaveRoom}>
-            <Text style={styles.leaveButtonText}>Leave Room</Text>
-          </TouchableOpacity>
-        </LinearGradient>
+          </LinearGradient>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.setupCard}>
+      <View style={[styles.setupCard, { 
+        backgroundColor: theme.cardBackground,
+        shadowColor: theme.shadowPiece
+      }, SHADOWS.medium]}>
         <View style={styles.setupHeader}>
-          <Users size={24} color={COLORS.primary} />
-          <Text style={styles.title}>Multiplayer Setup</Text>
+          <Users size={24} color={theme.primary} />
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Multiplayer Setup</Text>
         </View>
 
         {connectionStatus !== 'connected' && (
-          <View style={styles.connectionWarning}>
-            <Text style={styles.warningText}>
+          <View style={[styles.connectionWarning, { backgroundColor: theme.error + '15', borderColor: theme.error + '30' }]}>
+            <Text style={[styles.warningText, { color: theme.error }]}>
               {connectionStatus === 'connecting' ? 'Connecting to Supabase...' : 
                connectionStatus === 'error' ? 'Connection failed. Please check your network.' : 
                'Not connected to Supabase'}
             </Text>
-            {connectionStatus === 'connecting' && <ActivityIndicator color={COLORS.primary} />}
+            {connectionStatus === 'connecting' && <ActivityIndicator color={theme.primary} />}
           </View>
         )}
 
@@ -160,74 +170,86 @@ export default function SupabaseMultiplayerLobby() {
             {/* Create Room Section */}
             <View style={styles.optionSection}>
               <View style={styles.optionHeader}>
-                <Text style={styles.optionTitle}>🚀 Create New Room</Text>
-                <Text style={styles.optionSubtitle}>Start a new game and invite friends</Text>
+                <Text style={[styles.optionTitle, { color: theme.textPrimary }]}>🚀 Create New Room</Text>
+                <Text style={[styles.optionSubtitle, { color: theme.textSecondary }]}>Start a new game and invite friends</Text>
               </View>
               
               <TextInput
-                style={styles.input}
+                style={[styles.input, { 
+                  backgroundColor: theme.surfaceElevated, 
+                  borderColor: theme.border,
+                  color: theme.textPrimary 
+                }]}
                 placeholder="Enter your name"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={playerName}
                 onChangeText={setPlayerName}
                 maxLength={20}
               />
 
               <TouchableOpacity
-                style={[styles.actionButton, styles.createButton]}
+                style={[styles.actionButton, styles.createButton, { backgroundColor: theme.primary }]}
                 onPress={handleCreateRoom}
                 disabled={isCreatingRoom}
               >
                 {isCreatingRoom ? (
-                  <ActivityIndicator color={COLORS.background} size="small" />
+                  <ActivityIndicator color={theme.textInverse} size="small" />
                 ) : (
-                  <Text style={styles.createButtonText}>Create Room</Text>
+                  <Text style={[styles.createButtonText, { color: theme.textInverse }]}>Create Room</Text>
                 )}
               </TouchableOpacity>
             </View>
 
             {/* Divider */}
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+              <Text style={[styles.dividerText, { color: theme.textSecondary }]}>OR</Text>
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
             </View>
 
             {/* Join Room Section */}
             <View style={styles.optionSection}>
               <View style={styles.optionHeader}>
-                <Text style={styles.optionTitle}>🎯 Join Existing Room</Text>
-                <Text style={styles.optionSubtitle}>Enter a friend's room code to join their game</Text>
+                <Text style={[styles.optionTitle, { color: theme.textPrimary }]}>🎯 Join Existing Room</Text>
+                <Text style={[styles.optionSubtitle, { color: theme.textSecondary }]}>Enter a friend's room code to join their game</Text>
               </View>
               
               <TextInput
-                style={styles.input}
+                style={[styles.input, { 
+                  backgroundColor: theme.surfaceElevated, 
+                  borderColor: theme.border,
+                  color: theme.textPrimary 
+                }]}
                 placeholder="Enter your name"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={joinPlayerName}
                 onChangeText={setJoinPlayerName}
                 maxLength={20}
               />
 
               <TextInput
-                style={styles.input}
-                placeholder="Room Code (6 characters)"
-                placeholderTextColor={COLORS.textSecondary}
+                style={[styles.input, { 
+                  backgroundColor: theme.surfaceElevated, 
+                  borderColor: theme.border,
+                  color: theme.textPrimary 
+                }]}
+                placeholder="Enter room code"
+                placeholderTextColor={theme.textSecondary}
                 value={roomIdInput}
-                onChangeText={(text) => setRoomIdInput(text.toUpperCase())}
-                maxLength={6}
+                onChangeText={setRoomIdInput}
+                maxLength={8}
                 autoCapitalize="characters"
               />
-              
+
               <TouchableOpacity
-                style={[styles.actionButton, styles.joinButton]}
+                style={[styles.actionButton, styles.joinButton, { backgroundColor: theme.secondary }]}
                 onPress={handleJoinRoom}
                 disabled={isJoiningRoom}
               >
                 {isJoiningRoom ? (
-                  <ActivityIndicator color={COLORS.background} size="small" />
+                  <ActivityIndicator color={theme.textInverse} size="small" />
                 ) : (
-                  <Text style={styles.joinButtonText}>Join Room</Text>
+                  <Text style={[styles.joinButtonText, { color: theme.textInverse }]}>Join Room</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -240,15 +262,12 @@ export default function SupabaseMultiplayerLobby() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: SIZES.large,
-    paddingVertical: SIZES.medium,
     flex: 1,
   },
   roomCard: {
     borderRadius: 20,
     padding: SIZES.large,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
+    marginBottom: SIZES.large,
   },
   roomHeader: {
     flexDirection: 'row',
@@ -260,14 +279,11 @@ const styles = StyleSheet.create({
   roomTitle: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.large,
-    color: COLORS.success,
   },
   setupCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: SIZES.large,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    marginBottom: SIZES.large,
   },
   setupHeader: {
     flexDirection: 'row',
@@ -279,19 +295,17 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.large,
-    color: COLORS.textPrimary,
   },
   connectionWarning: {
-    backgroundColor: COLORS.warning,
     padding: SIZES.medium,
     borderRadius: SIZES.small,
     alignItems: 'center',
     marginBottom: SIZES.medium,
+    borderWidth: 1,
   },
   warningText: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.background,
     textAlign: 'center',
     marginBottom: SIZES.small,
   },
@@ -300,14 +314,11 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: SIZES.small,
     paddingHorizontal: SIZES.medium,
     paddingVertical: SIZES.small,
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.textPrimary,
-    backgroundColor: COLORS.white,
   },
   roomActions: {
     gap: SIZES.medium,
@@ -321,23 +332,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   createButton: {
-    backgroundColor: COLORS.primary,
+    // backgroundColor will be set dynamically
   },
   createButtonText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.small,
-    color: COLORS.background,
   },
   joinSection: {
     gap: SIZES.small,
   },
   joinButton: {
-    backgroundColor: COLORS.secondary,
+    // backgroundColor will be set dynamically
   },
   joinButtonText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.small,
-    color: COLORS.background,
   },
   roomIdContainer: {
     alignItems: 'center',
@@ -346,15 +355,12 @@ const styles = StyleSheet.create({
   roomIdLabel: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.textPrimary,
     marginBottom: SIZES.medium,
   },
   roomCodeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderWidth: 3,
-    borderColor: COLORS.primary,
+    borderWidth: 2,
     borderRadius: 16,
     paddingHorizontal: SIZES.large,
     paddingVertical: SIZES.medium,
@@ -364,13 +370,11 @@ const styles = StyleSheet.create({
   roomIdText: {
     fontFamily: FONTS.bold,
     fontSize: 36,
-    color: COLORS.primary,
     letterSpacing: 6,
   },
   roomIdSubtext: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -378,48 +382,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.success + '20',
     borderRadius: 12,
     padding: SIZES.medium,
     marginBottom: SIZES.large,
-    borderWidth: 1,
-    borderColor: COLORS.success + '40',
   },
   statusIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.success,
     marginRight: SIZES.small,
   },
   opponentText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.medium,
-    color: COLORS.success,
   },
   waitingContainer: {
     alignItems: 'center',
-    backgroundColor: COLORS.warning + '20',
     borderRadius: 12,
     padding: SIZES.large,
     marginBottom: SIZES.large,
-    borderWidth: 1,
-    borderColor: COLORS.warning + '40',
     gap: SIZES.small,
   },
   waitingText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.small,
-    color: COLORS.warning,
   },
   waitingSubtext: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: SIZES.xSmall,
-    color: COLORS.textSecondary,
     textAlign: 'center',
   },
   leaveButton: {
-    backgroundColor: COLORS.error,
     paddingVertical: SIZES.large,
     paddingHorizontal: SIZES.large,
     borderRadius: 12,
@@ -429,7 +422,6 @@ const styles = StyleSheet.create({
   leaveButtonText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.small,
-    color: COLORS.background,
   },
   optionSection: {
     gap: SIZES.medium,
@@ -442,29 +434,30 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.large,
-    color: COLORS.textPrimary,
   },
   optionSubtitle: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.textSecondary,
     textAlign: 'center',
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SIZES.medium,
+    gap: SIZES.medium,
+    marginVertical: SIZES.medium,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
   },
   dividerText: {
     fontFamily: FONTS.bold,
-    fontSize: SIZES.small,
-    color: COLORS.textPrimary,
-    marginHorizontal: SIZES.medium,
+    fontSize: SIZES.xSmall,
+    paddingHorizontal: SIZES.medium,
+  },
+  roomCardGradient: {
+    borderRadius: 20,
+    padding: SIZES.large,
   },
 }); 

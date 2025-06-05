@@ -18,11 +18,12 @@ export type GameState = {
   currentPlayer: PlayerType;
   moveCount: number;
   gameOver: boolean;
-  winner: PlayerType | 'draw' | null;
+  winner: PlayerType | null;
   winningLine: Position[] | null;
   scores: {
     X: number;
     O: number;
-    draws: number;
   };
+  turnStartTime?: Date; // Optional - only starts on first move
+  turnTimeLimit: number; // Time limit per turn in seconds (default 15)
 };

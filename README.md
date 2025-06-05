@@ -1,6 +1,6 @@
-# Tic-Tac-Toe Special Edition 🎮
+# Tic-Tac-Toe Bolt 🎮
 
-A modern React Native tic-tac-toe game with unique piece lifecycle mechanics and **real-time multiplayer** support!
+A modern, feature-rich Tic-Tac-Toe game built with React Native and Expo. This isn't your ordinary Tic-Tac-Toe - it features innovative gameplay mechanics, beautiful theming, and both local and online multiplayer modes.
 
 ## 🌟 Features
 
@@ -159,4 +159,4 @@ Feel free to contribute! Some ideas:
 
 ---
 
-Enjoy playing Tic-Tac-Toe Special Edition! 🎉
+Enjoy playing Tic-Tac-Toe Bolt! 🎉

@@ -1,192 +1,193 @@
 import React from 'react';
 import { StyleSheet, Text, View, SafeAreaView, ScrollView } from 'react-native';
-import { COLORS, FONTS, SHADOWS, SIZES } from '@/constants/theme';
+import { FONTS, SHADOWS, SIZES } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Trophy, Target, Users, Lightbulb, Clock, Eye, ArrowDown } from 'lucide-react-native';
 import PieceLifecycle from '@/components/PieceLifecycle';
 
 export default function HowToPlayScreen() {
+  const { theme, isDark } = useTheme();
+
+  // Dynamic gradient colors for how-to-play
+  const backgroundGradient = isDark 
+    ? [theme.background, theme.backgroundSecondary, theme.backgroundTertiary]
+    : ['#FEF3C7', '#F3E8FF', '#E0F2FE', '#ECFDF5']; // Yellow -> Purple -> Cyan -> Green
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <LinearGradient
-        colors={['#FEFEFE', '#F8FAFC', '#F1F5F9']}
+        colors={backgroundGradient}
         style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.headerIcon}>
-              <Trophy size={32} color={COLORS.warning} />
+            <View style={[styles.headerIcon, { backgroundColor: theme.warning + '20' }]}>
+              <Trophy size={32} color={theme.warning} />
             </View>
-            <Text style={styles.title}>How To Play</Text>
-            <Text style={styles.subtitle}>Master the Special Rules Edition</Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>How To Play</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Master the Special Rules Edition</Text>
           </View>
           
           {/* Basic Rules Card */}
-          <View style={styles.card}>
-            <LinearGradient
-              colors={[COLORS.white, '#F8FAFC']}
-              style={styles.cardGradient}
-            >
+          <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
+            <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Target size={24} color={COLORS.primary} />
+                <View style={[styles.cardIcon, { backgroundColor: theme.primary + '20' }]}>
+                  <Target size={24} color={theme.primary} />
                 </View>
-                <Text style={styles.sectionTitle}>Basic Rules</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Basic Rules</Text>
               </View>
               
               <View style={styles.rulesList}>
                 <View style={styles.ruleItem}>
-                  <View style={styles.ruleNumber}>
-                    <Text style={styles.ruleNumberText}>1</Text>
+                  <View style={[styles.ruleNumber, { backgroundColor: theme.primary }]}>
+                    <Text style={[styles.ruleNumberText, { color: theme.textInverse }]}>1</Text>
                   </View>
-                  <Text style={styles.ruleText}>
+                  <Text style={[styles.ruleText, { color: theme.textSecondary }]}>
                     Players take turns placing X's and O's on the board
                   </Text>
                 </View>
                 
                 <View style={styles.ruleItem}>
-                  <View style={styles.ruleNumber}>
-                    <Text style={styles.ruleNumberText}>2</Text>
+                  <View style={[styles.ruleNumber, { backgroundColor: theme.primary }]}>
+                    <Text style={[styles.ruleNumberText, { color: theme.textInverse }]}>2</Text>
                   </View>
-                  <Text style={styles.ruleText}>
-                    First player is <Text style={[styles.playerSymbol, { color: COLORS.xColor }]}>X</Text>, second player is <Text style={[styles.playerSymbol, { color: COLORS.oColor }]}>O</Text>
+                  <Text style={[styles.ruleText, { color: theme.textSecondary }]}>
+                    First player is <Text style={[styles.playerSymbol, { color: theme.xColor }]}>X</Text>, second player is <Text style={[styles.playerSymbol, { color: theme.oColor }]}>O</Text>
                   </Text>
                 </View>
                 
                 <View style={styles.ruleItem}>
-                  <View style={styles.ruleNumber}>
-                    <Text style={styles.ruleNumberText}>3</Text>
+                  <View style={[styles.ruleNumber, { backgroundColor: theme.primary }]}>
+                    <Text style={[styles.ruleNumberText, { color: theme.textInverse }]}>3</Text>
                   </View>
-                  <Text style={styles.ruleText}>
+                  <Text style={[styles.ruleText, { color: theme.textSecondary }]}>
                     Get three pieces in a row (horizontally, vertically, or diagonally) to win
                   </Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </View>
           
           {/* Special Rules Card */}
-          <View style={styles.card}>
-            <LinearGradient
-              colors={[COLORS.white, '#F8FAFC']}
-              style={styles.cardGradient}
-            >
+          <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
+            <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
-                <View style={[styles.cardIcon, { backgroundColor: COLORS.secondary + '20' }]}>
-                  <Users size={24} color={COLORS.secondary} />
+                <View style={[styles.cardIcon, { backgroundColor: theme.secondary + '20' }]}>
+                  <Users size={24} color={theme.secondary} />
                 </View>
-                <Text style={styles.sectionTitle}>Special Rules</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Special Rules</Text>
               </View>
               
               <View style={styles.specialRulesContainer}>
-                <View style={styles.highlightBox}>
-                  <Text style={styles.highlightText}>
+                <View style={[styles.highlightBox, { backgroundColor: theme.primary + '15', borderColor: theme.primary + '30' }]}>
+                  <Text style={[styles.highlightText, { color: theme.textPrimary }]}>
                     Maximum 3 pieces per player on board at any time
                   </Text>
                 </View>
                 
                 {/* Step 1 */}
-                <View style={styles.stepCard}>
+                <View style={[styles.stepCard, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}>
                   <View style={styles.stepHeader}>
-                    <View style={[styles.stepIcon, { backgroundColor: COLORS.primary + '20' }]}>
-                      <Clock size={20} color={COLORS.primary} />
+                    <View style={[styles.stepIcon, { backgroundColor: theme.primary + '20' }]}>
+                      <Clock size={20} color={theme.primary} />
                     </View>
-                    <Text style={styles.stepTitle}>Step 1: Shadowing Begins</Text>
+                    <Text style={[styles.stepTitle, { color: theme.textPrimary }]}>Step 1: Shadowing Begins</Text>
                   </View>
-                  <Text style={styles.stepDescription}>
+                  <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
                     Shadowing starts when BOTH players have 3 pieces on the board. Until then, players can place pieces freely.
                   </Text>
                 </View>
 
                 {/* Arrow Down */}
                 <View style={styles.stepConnector}>
-                  <ArrowDown size={20} color={COLORS.textSecondary} />
+                  <ArrowDown size={20} color={theme.textSecondary} />
                 </View>
 
                 {/* Step 2 */}
-                <View style={styles.stepCard}>
+                <View style={[styles.stepCard, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}>
                   <View style={styles.stepHeader}>
-                    <View style={[styles.stepIcon, { backgroundColor: COLORS.secondary + '20' }]}>
-                      <Eye size={20} color={COLORS.secondary} />
+                    <View style={[styles.stepIcon, { backgroundColor: theme.secondary + '20' }]}>
+                      <Eye size={20} color={theme.secondary} />
                     </View>
-                    <Text style={styles.stepTitle}>Step 2: Piece Gets Shadowed</Text>
+                    <Text style={[styles.stepTitle, { color: theme.textPrimary }]}>Step 2: Piece Gets Shadowed</Text>
                   </View>
-                  <Text style={styles.stepDescription}>
+                  <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
                     The oldest piece becomes "shadowed" (appears faded and translucent). Shadowed pieces cannot be used to win.
                   </Text>
                 </View>
 
                 {/* Arrow Down */}
                 <View style={styles.stepConnector}>
-                  <ArrowDown size={20} color={COLORS.textSecondary} />
+                  <ArrowDown size={20} color={theme.textSecondary} />
                 </View>
 
                 {/* Step 3 */}
-                <View style={styles.stepCard}>
+                <View style={[styles.stepCard, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}>
                   <View style={styles.stepHeader}>
-                    <View style={[styles.stepIcon, { backgroundColor: COLORS.warning + '20' }]}>
-                      <Target size={20} color={COLORS.warning} />
+                    <View style={[styles.stepIcon, { backgroundColor: theme.warning + '20' }]}>
+                      <Target size={20} color={theme.warning} />
                     </View>
-                    <Text style={styles.stepTitle}>Step 3: Removal & Cycle</Text>
+                    <Text style={[styles.stepTitle, { color: theme.textPrimary }]}>Step 3: Removal & Cycle</Text>
                   </View>
-                  <Text style={styles.stepDescription}>
+                  <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
                     When you place your next piece, your shadowed piece disappears completely. This cycle continues throughout the game.
                   </Text>
                 </View>
                 
-                <View style={styles.winCondition}>
-                  <Text style={styles.winConditionText}>
-                    🏆 Win only with 3 <Text style={styles.emphasis}>non-shadowed</Text> pieces in a row
+                <View style={[styles.winCondition, { backgroundColor: theme.success + '15', borderColor: theme.success + '30' }]}>
+                  <Text style={[styles.winConditionText, { color: theme.textPrimary }]}>
+                    🏆 Win only with 3 <Text style={[styles.emphasis, { color: theme.success }]}>non-shadowed</Text> pieces in a row
                   </Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </View>
           
           {/* Piece Lifecycle */}
           <View style={styles.lifecycleSection}>
-            <Text style={styles.lifecycleTitle}>Piece Lifecycle</Text>
+            <Text style={[styles.lifecycleTitle, { color: theme.textPrimary }]}>Piece Lifecycle</Text>
             <PieceLifecycle type="X" />
             <PieceLifecycle type="O" />
           </View>
           
           {/* Strategy Tips Card */}
-          <View style={styles.card}>
-            <LinearGradient
-              colors={[COLORS.warning + '10', COLORS.white]}
-              style={styles.cardGradient}
-            >
+          <View style={[styles.cardNoShadow, { backgroundColor: theme.warning + '10' }]}>
+            <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
-                <View style={[styles.cardIcon, { backgroundColor: COLORS.warning + '20' }]}>
-                  <Lightbulb size={24} color={COLORS.warning} />
+                <View style={[styles.cardIcon, { backgroundColor: theme.warning + '20' }]}>
+                  <Lightbulb size={24} color={theme.warning} />
                 </View>
-                <Text style={styles.sectionTitle}>Pro Tips</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Pro Tips</Text>
               </View>
               
               <View style={styles.tipsList}>
                 <View style={styles.tipItem}>
                   <Text style={styles.tipEmoji}>🎯</Text>
-                  <Text style={styles.tipText}>
+                  <Text style={[styles.tipText, { color: theme.textSecondary }]}>
                     Time your moves considering which pieces become shadowed next
                   </Text>
                 </View>
                 
                 <View style={styles.tipItem}>
                   <Text style={styles.tipEmoji}>🔄</Text>
-                  <Text style={styles.tipText}>
+                  <Text style={[styles.tipText, { color: theme.textSecondary }]}>
                     Create multiple potential winning lines for flexibility
                   </Text>
                 </View>
                 
                 <View style={styles.tipItem}>
                   <Text style={styles.tipEmoji}>👁️</Text>
-                  <Text style={styles.tipText}>
+                  <Text style={[styles.tipText, { color: theme.textSecondary }]}>
                     Watch which pieces will disappear and plan accordingly
                   </Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </View>
         </ScrollView>
       </LinearGradient>
@@ -202,72 +203,57 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: SIZES.large,
-    paddingBottom: SIZES.xxLarge,
+    paddingBottom: SIZES.xxLarge * 2,
   },
   header: {
     alignItems: 'center',
-    paddingTop: SIZES.xxLarge,
-    paddingBottom: SIZES.large,
+    paddingVertical: SIZES.xxLarge,
+    paddingHorizontal: SIZES.large,
   },
   headerIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SIZES.medium,
-    shadowColor: COLORS.warning,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-    borderWidth: 2,
-    borderColor: '#FEF3C7',
   },
   title: {
     fontFamily: FONTS.bold,
     fontSize: 32,
-    color: COLORS.textPrimary,
-    marginBottom: SIZES.xSmall,
+    textAlign: 'center',
   },
   subtitle: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: SIZES.xSmall,
   },
   card: {
+    marginHorizontal: SIZES.large,
     marginBottom: SIZES.large,
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    borderRadius: 16,
+    ...SHADOWS.medium,
   },
-  cardGradient: {
+  cardContent: {
     padding: SIZES.large,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SIZES.medium,
+    marginBottom: SIZES.large,
   },
   cardIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SIZES.medium,
   },
   sectionTitle: {
     fontFamily: FONTS.bold,
-    fontSize: SIZES.large,
-    color: COLORS.textPrimary,
+    fontSize: 22,
     flex: 1,
   },
   rulesList: {
@@ -281,7 +267,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SIZES.medium,
@@ -290,46 +275,33 @@ const styles = StyleSheet.create({
   ruleNumberText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.small,
-    color: COLORS.white,
   },
   ruleText: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.textPrimary,
     lineHeight: 24,
     flex: 1,
   },
   playerSymbol: {
     fontFamily: FONTS.bold,
-    fontSize: SIZES.medium,
   },
   specialRulesContainer: {
     gap: SIZES.medium,
   },
   highlightBox: {
-    backgroundColor: COLORS.primary + '10',
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
-    borderRadius: 8,
     padding: SIZES.medium,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   highlightText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.medium,
-    color: COLORS.primary,
     textAlign: 'center',
   },
   stepCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
     padding: SIZES.medium,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -342,71 +314,67 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: SIZES.medium,
+    marginRight: SIZES.small,
   },
   stepTitle: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.medium,
-    color: COLORS.textPrimary,
     flex: 1,
   },
   stepDescription: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.medium,
-    color: COLORS.textSecondary,
-    lineHeight: 22,
-    marginLeft: 52, // Align with title text (36px icon + 16px margin)
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.small,
+    lineHeight: 20,
   },
   stepConnector: {
     alignItems: 'center',
     paddingVertical: SIZES.xSmall,
   },
   winCondition: {
-    backgroundColor: COLORS.success + '10',
-    borderRadius: 12,
     padding: SIZES.medium,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.success + '30',
     marginTop: SIZES.small,
   },
   winConditionText: {
-    fontFamily: FONTS.medium,
+    fontFamily: FONTS.bold,
     fontSize: SIZES.medium,
-    color: COLORS.success,
     textAlign: 'center',
   },
   emphasis: {
     fontFamily: FONTS.bold,
   },
   lifecycleSection: {
+    marginHorizontal: SIZES.large,
     marginBottom: SIZES.large,
-    alignItems: 'center',
   },
   lifecycleTitle: {
     fontFamily: FONTS.bold,
-    fontSize: SIZES.large,
-    color: COLORS.textPrimary,
-    marginBottom: SIZES.medium,
+    fontSize: 22,
     textAlign: 'center',
+    marginBottom: SIZES.large,
   },
   tipsList: {
     gap: SIZES.medium,
   },
   tipItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   tipEmoji: {
-    fontSize: 24,
+    fontSize: 20,
     marginRight: SIZES.medium,
-    width: 32,
-    textAlign: 'center',
+    marginTop: 2,
   },
   tipText: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.textPrimary,
-    lineHeight: 22,
+    lineHeight: 24,
     flex: 1,
+  },
+  cardNoShadow: {
+    marginHorizontal: SIZES.large,
+    marginBottom: SIZES.large,
+    borderRadius: 16,
   },
 });

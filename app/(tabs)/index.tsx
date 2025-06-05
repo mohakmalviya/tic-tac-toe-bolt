@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, Dimensions } from 'react-native';
-import { COLORS, FONTS, SIZES, SHADOWS } from '@/constants/theme';
+import { FONTS, SIZES, SHADOWS } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 import { router } from 'expo-router';
 import { Users, Smartphone, Sparkles, Play, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +9,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const { theme, isDark } = useTheme();
+
   const navigateToLocalGame = () => {
     router.push('/local-game');
   };
@@ -16,11 +19,28 @@ export default function HomeScreen() {
     router.push('/multiplayer');
   };
 
+  // Dynamic gradient colors based on theme
+  const backgroundGradient = isDark 
+    ? ['#0F172A', '#1E293B', '#334155']
+    : [theme.background, theme.backgroundSecondary, theme.backgroundTertiary, theme.backgroundDark];
+
+  const localGameGradient = isDark
+    ? ['#4338CA', '#6366F1']
+    : ['#667eea', '#764ba2'];
+
+  const multiplayerGradient = isDark
+    ? ['#DC2626', '#EF4444']
+    : ['#f093fb', '#f5576c'];
+
+  const featureGradient = isDark
+    ? [theme.cardBackground, theme.backgroundSecondary]
+    : [theme.white, '#F8FAFC'];
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Background Gradient */}
       <LinearGradient
-        colors={['#FEFEFE', '#F8FAFC', '#F1F5F9']}
+        colors={backgroundGradient}
         style={styles.backgroundGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -29,27 +49,31 @@ export default function HomeScreen() {
           {/* Hero Section */}
           <View style={styles.heroSection}>
             <View style={styles.logoContainer}>
-              <View style={styles.logoBackground}>
-                <Sparkles size={40} color={COLORS.warning} />
+              <View style={[styles.logoBackground, { 
+                backgroundColor: theme.cardBackground,
+                borderColor: isDark ? theme.border : '#FEF3C7',
+                shadowColor: theme.warning,
+              }]}>
+                <Sparkles size={40} color={theme.warning} />
               </View>
             </View>
             
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Tic-Tac-Toe</Text>
+              <Text style={[styles.title, { color: theme.textPrimary }]}>Tic-Tac-Toe</Text>
               <View style={styles.subtitleContainer}>
                 <LinearGradient
-                  colors={[COLORS.primary, COLORS.secondary]}
+                  colors={[theme.primary, theme.secondary]}
                   style={styles.subtitleGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.subtitle}>Special Edition</Text>
+                  <Text style={[styles.subtitle, { color: theme.white }]}>Bolt Edition</Text>
                 </LinearGradient>
               </View>
             </View>
             
-            <Text style={styles.description}>
-              Experience the classic game with strategic depth and beautiful design
+            <Text style={[styles.description, { color: theme.textSecondary }]}>
+              Experience the classic game with strategic depth and modern gameplay
             </Text>
           </View>
           
@@ -61,7 +85,7 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={localGameGradient}
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -69,17 +93,17 @@ export default function HomeScreen() {
                 <View style={styles.buttonContent}>
                   <View style={styles.iconWrapper}>
                     <View style={styles.iconBackground}>
-                      <Smartphone size={32} color={COLORS.white} />
+                      <Smartphone size={32} color={theme.white} />
                     </View>
                   </View>
                   <View style={styles.textWrapper}>
-                    <Text style={styles.gameModeTitle}>Local Game</Text>
-                    <Text style={styles.gameModeDescription}>
+                    <Text style={[styles.gameModeTitle, { color: theme.white }]}>Local Game</Text>
+                    <Text style={[styles.gameModeDescription, { color: theme.white, opacity: 0.9 }]}>
                       Pass & play with friends on same device
                     </Text>
                   </View>
                   <View style={styles.playIcon}>
-                    <Play size={20} color={COLORS.white} fill={COLORS.white} />
+                    <Play size={20} color={theme.white} fill={theme.white} />
                   </View>
                 </View>
               </LinearGradient>
@@ -91,7 +115,7 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={['#f093fb', '#f5576c']}
+                colors={multiplayerGradient}
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -99,17 +123,17 @@ export default function HomeScreen() {
                 <View style={styles.buttonContent}>
                   <View style={styles.iconWrapper}>
                     <View style={styles.iconBackground}>
-                      <Users size={32} color={COLORS.white} />
+                      <Users size={32} color={theme.white} />
                     </View>
                   </View>
                   <View style={styles.textWrapper}>
-                    <Text style={styles.gameModeTitle}>Multiplayer</Text>
-                    <Text style={styles.gameModeDescription}>
+                    <Text style={[styles.gameModeTitle, { color: theme.white }]}>Multiplayer</Text>
+                    <Text style={[styles.gameModeDescription, { color: theme.white, opacity: 0.9 }]}>
                       Play online with friends using room codes
                     </Text>
                   </View>
                   <View style={styles.playIcon}>
-                    <Zap size={20} color={COLORS.white} fill={COLORS.white} />
+                    <Zap size={20} color={theme.white} fill={theme.white} />
                   </View>
                 </View>
               </LinearGradient>
@@ -119,7 +143,7 @@ export default function HomeScreen() {
           {/* Feature Section */}
           <View style={styles.featureSection}>
             <LinearGradient
-              colors={[COLORS.white, '#F8FAFC']}
+              colors={featureGradient}
               style={styles.featureGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
@@ -127,14 +151,14 @@ export default function HomeScreen() {
               <View style={styles.featureContent}>
                 <View style={styles.featureIconContainer}>
                   <LinearGradient
-                    colors={[COLORS.warning, '#F59E0B']}
+                    colors={[theme.warning, '#F59E0B']}
                     style={styles.featureIconGradient}
                   >
-                    <Sparkles size={16} color={COLORS.white} />
+                    <Sparkles size={16} color={theme.white} />
                   </LinearGradient>
                 </View>
-                <Text style={styles.featureText}>
-                  Special piece lifecycle: <Text style={styles.featureHighlight}>Active → Shadowed → Removed</Text>
+                <Text style={[styles.featureText, { color: theme.textSecondary }]}>
+                  Special piece lifecycle: <Text style={[styles.featureHighlight, { color: theme.primary }]}>Active → Shadowed → Removed</Text>
                 </Text>
               </View>
             </LinearGradient>
@@ -142,13 +166,13 @@ export default function HomeScreen() {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
               Ready to challenge your strategic thinking?
             </Text>
             <View style={styles.footerDots}>
-              <View style={[styles.dot, { backgroundColor: COLORS.primary }]} />
-              <View style={[styles.dot, { backgroundColor: COLORS.secondary }]} />
-              <View style={[styles.dot, { backgroundColor: COLORS.warning }]} />
+              <View style={[styles.dot, { backgroundColor: theme.primary }]} />
+              <View style={[styles.dot, { backgroundColor: theme.secondary }]} />
+              <View style={[styles.dot, { backgroundColor: theme.warning }]} />
             </View>
           </View>
         </View>
@@ -181,16 +205,13 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.warning,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 8,
     borderWidth: 2,
-    borderColor: '#FEF3C7',
   },
   titleContainer: {
     alignItems: 'center',
@@ -199,7 +220,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: FONTS.bold,
     fontSize: width * 0.095,
-    color: COLORS.textPrimary,
     textAlign: 'center',
     letterSpacing: -2,
     textShadowColor: 'rgba(0,0,0,0.1)',
@@ -218,13 +238,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.white,
     textAlign: 'center',
   },
   description: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: SIZES.small,
@@ -274,7 +292,6 @@ const styles = StyleSheet.create({
   gameModeTitle: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.large,
-    color: COLORS.white,
     marginBottom: SIZES.xSmall,
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 0, height: 1 },
@@ -283,7 +300,6 @@ const styles = StyleSheet.create({
   gameModeDescription: {
     fontFamily: FONTS.regular,
     fontSize: SIZES.small,
-    color: COLORS.white,
     opacity: 0.95,
     lineHeight: 18,
   },
@@ -295,7 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     marginBottom: SIZES.large,
-    shadowColor: COLORS.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -321,12 +337,10 @@ const styles = StyleSheet.create({
   featureText: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.textPrimary,
     flex: 1,
     lineHeight: 18,
   },
   featureHighlight: {
-    color: COLORS.primary,
     fontFamily: FONTS.bold,
   },
   footer: {
@@ -335,7 +349,6 @@ const styles = StyleSheet.create({
   footerText: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: SIZES.small,

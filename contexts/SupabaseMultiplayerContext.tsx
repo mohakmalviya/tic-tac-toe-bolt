@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase, Room, GameStateDB } from '@/utils/supabase';
 import { GameState, PlayerType } from '@/types/game';
-import { initializeGameState, makeMove as makeGameMove } from '@/utils/gameLogic';
+import { initializeGameState, makeMove as makeGameMove, handleTimeout } from '@/utils/gameLogic';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface SupabaseMultiplayerContextType {
@@ -11,13 +11,16 @@ interface SupabaseMultiplayerContextType {
   playerRole: PlayerType | null;
   isHost: boolean;
   opponent: { id: string; name: string } | null;
+  currentPlayerName: string | null;
   gameState: GameState | null;
   createRoom: (playerName: string) => Promise<void>;
   joinRoom: (roomId: string, playerName: string) => Promise<void>;
   leaveRoom: () => Promise<void>;
   makeMove: (row: number, col: number) => Promise<void>;
   resetGame: () => Promise<void>;
+  onTurnTimeout: () => Promise<void>;
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
+  isAutoRestarting: boolean;
 }
 
 const SupabaseMultiplayerContext = createContext<SupabaseMultiplayerContextType | undefined>(undefined);
@@ -36,16 +39,22 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
   const [playerRole, setPlayerRole] = useState<PlayerType | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [opponent, setOpponent] = useState<{ id: string; name: string } | null>(null);
+  const [currentPlayerName, setCurrentPlayerName] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   const [roomChannel, setRoomChannel] = useState<RealtimeChannel | null>(null);
   const [roomCheckInterval, setRoomCheckInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [isAutoRestarting, setIsAutoRestarting] = useState(false);
+  const autoRestartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use refs to avoid stale closures in intervals
   const opponentRef = useRef(opponent);
   const roomIdRef = useRef(roomId);
   const playerIdRef = useRef(playerId);
   const isHostRef = useRef(isHost);
+  const isCleaningUpRef = useRef(isCleaningUp);
+  const gameStateRef = useRef(gameState);
 
   // Update refs when state changes
   useEffect(() => {
@@ -59,6 +68,14 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
   useEffect(() => {
     isHostRef.current = isHost;
   }, [isHost]);
+
+  useEffect(() => {
+    isCleaningUpRef.current = isCleaningUp;
+  }, [isCleaningUp]);
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
 
   // Initialize connection
   useEffect(() => {
@@ -154,17 +171,131 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           table: 'game_states',
           filter: `room_id=eq.${roomId}`
         },
-        (payload) => {
+        (payload: any) => {
           const dbGameState = payload.new as GameStateDB;
-          setGameState({
+          const newGameState = {
             board: dbGameState.board,
             currentPlayer: dbGameState.current_player,
             moveCount: dbGameState.move_count,
             gameOver: dbGameState.game_over,
             winner: dbGameState.winner as any,
             winningLine: dbGameState.winning_line,
-            scores: dbGameState.scores
+            scores: dbGameState.scores,
+            turnStartTime: dbGameState.turn_start_time ? new Date(dbGameState.turn_start_time) : undefined,
+            turnTimeLimit: dbGameState.turn_time_limit || 15
+          };
+          
+          console.log('Game state updated:', {
+            moveCount: newGameState.moveCount,
+            gameOver: newGameState.gameOver,
+            winner: newGameState.winner,
+            hasTimeout: !!autoRestartTimeoutRef.current,
+            isAutoRestarting
           });
+          
+          setGameState(newGameState);
+          
+          // Clear auto-restart state when a new game starts
+          if (newGameState.moveCount === 0 && !newGameState.gameOver) {
+            console.log('New game detected, clearing auto-restart state');
+            setIsAutoRestarting(false);
+            if (autoRestartTimeoutRef.current) {
+              clearTimeout(autoRestartTimeoutRef.current);
+              autoRestartTimeoutRef.current = null;
+              console.log('Cleared auto-restart timeout due to new game');
+            }
+          }
+          
+          // Auto-restart game 5 seconds after someone wins
+          if (newGameState.gameOver && newGameState.winner && isHostRef.current && !autoRestartTimeoutRef.current) {
+            console.log('Auto-restart triggered: game over, winner:', newGameState.winner, 'isHost:', isHostRef.current);
+            
+            // Set auto-restart flag to prevent multiple triggers
+            setIsAutoRestarting(true);
+            
+            // Phase 1: Clear board after 2 seconds
+            const timeout = setTimeout(async () => {
+              console.log('Phase 1: Clearing board after 2 seconds...');
+              
+              const currentRoomId = roomIdRef.current;
+              const currentGameState = gameStateRef.current;
+              
+              if (!currentRoomId) {
+                console.log('No room ID, aborting auto-restart');
+                setIsAutoRestarting(false);
+                autoRestartTimeoutRef.current = null;
+                return;
+              }
+              
+              try {
+                // Create an empty board state for visual clearing
+                const emptyGameState = initializeGameState();
+                // Preserve scores from current game
+                if (currentGameState) {
+                  emptyGameState.scores = currentGameState.scores;
+                }
+                
+                // Update database immediately to sync both players
+                const { error } = await supabase
+                  .from('game_states')
+                  .update({
+                    board: emptyGameState.board,
+                    current_player: emptyGameState.currentPlayer,
+                    move_count: emptyGameState.moveCount,
+                    game_over: emptyGameState.gameOver,
+                    winner: emptyGameState.winner,
+                    winning_line: emptyGameState.winningLine,
+                    scores: emptyGameState.scores,
+                    turn_start_time: emptyGameState.turnStartTime?.toISOString() || null,
+                    turn_time_limit: emptyGameState.turnTimeLimit,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('room_id', currentRoomId);
+
+                if (error) {
+                  console.error('Database update failed during board clear:', error);
+                  throw error;
+                }
+                
+                console.log('Board cleared in database - both players should see empty board');
+                
+                // Phase 2: Wait additional 3 seconds for the "new game starting" phase
+                const newGameTimeout = setTimeout(async () => {
+                  console.log('Phase 2: New game officially starting...');
+                  
+                  const finalRoomId = roomIdRef.current;
+                  if (!finalRoomId) {
+                    console.log('No room ID for phase 2, aborting');
+                    setIsAutoRestarting(false);
+                    autoRestartTimeoutRef.current = null;
+                    return;
+                  }
+                  
+                  try {
+                    // Just clear the auto-restart flag - board is already cleared
+                    console.log('New game ready - clearing auto-restart flag');
+                    setIsAutoRestarting(false);
+                  } catch (error) {
+                    console.error('Phase 2 failed:', error);
+                    setIsAutoRestarting(false);
+                  } finally {
+                    autoRestartTimeoutRef.current = null;
+                  }
+                }, 3000); // Additional 3 seconds
+                
+                // Store the new game timeout
+                autoRestartTimeoutRef.current = newGameTimeout;
+                
+              } catch (error) {
+                console.error('Phase 1 failed:', error);
+                setIsAutoRestarting(false);
+                autoRestartTimeoutRef.current = null;
+              }
+            }, 2000); // 2 seconds
+            
+            autoRestartTimeoutRef.current = timeout;
+            console.log('Auto-restart timeout set for 2 seconds (board clear)');
+          }
         }
       )
       .on(
@@ -175,7 +306,7 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           table: 'rooms',
           filter: `id=eq.${roomId}`
         },
-        async (payload) => {
+        async (payload: any) => {
           const room = payload.new as Room;
           
           // Update opponent info when someone joins
@@ -188,7 +319,7 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           }
         }
       )
-      .subscribe((status, err) => {
+      .subscribe((status: string, err?: Error) => {
         if (err) console.error('Subscription error:', err);
         
         // If subscription fails, try to reconnect
@@ -255,7 +386,9 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           game_over: initialGameState.gameOver,
           winner: initialGameState.winner,
           winning_line: initialGameState.winningLine,
-          scores: initialGameState.scores
+          scores: initialGameState.scores,
+          turn_start_time: initialGameState.turnStartTime?.toISOString() || null,
+          turn_time_limit: initialGameState.turnTimeLimit
         });
 
       if (gameError) throw gameError;
@@ -265,6 +398,7 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
       setPlayerRole('X');
       setIsHost(true);
       setGameState(initialGameState);
+      setCurrentPlayerName(playerName);
 
       // Then subscribe to room updates
       subscribeToRoom(newRoomId);
@@ -325,8 +459,11 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
         gameOver: gameState.game_over,
         winner: gameState.winner as any,
         winningLine: gameState.winning_line,
-        scores: gameState.scores
+        scores: gameState.scores,
+        turnStartTime: gameState.turn_start_time ? new Date(gameState.turn_start_time) : new Date(),
+        turnTimeLimit: gameState.turn_time_limit || 15
       });
+      setCurrentPlayerName(playerName);
 
       // Then subscribe to room updates
       subscribeToRoom(roomId);
@@ -337,31 +474,24 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
   }, [playerId, subscribeToRoom, unsubscribeFromRoom, roomChannel, roomCheckInterval]);
 
   const leaveRoom = useCallback(async () => {
-    if (!roomId) return;
+    if (!roomId || isCleaningUpRef.current) return;
 
     try {
+      console.log('Leaving room:', roomId);
+      setIsCleaningUp(true);
+      
+      // Clear any pending auto-restart timeout
+      if (autoRestartTimeoutRef.current) {
+        clearTimeout(autoRestartTimeoutRef.current);
+        autoRestartTimeoutRef.current = null;
+        console.log('Cleared auto-restart timeout during room leave');
+      }
+      setIsAutoRestarting(false);
+      
       unsubscribeFromRoom();
 
       // Always delete room and game state data when anyone leaves
-      // Delete game state first (due to foreign key constraint)
-      const { error: gameStateError } = await supabase
-        .from('game_states')
-        .delete()
-        .eq('room_id', roomId);
-      
-      if (gameStateError) {
-        console.error('Error deleting game state:', gameStateError);
-      }
-
-      // Delete room
-      const { error: roomError } = await supabase
-        .from('rooms')
-        .delete()
-        .eq('id', roomId);
-      
-      if (roomError) {
-        console.error('Error deleting room:', roomError);
-      }
+      await cleanupRoom(roomId);
 
       // Reset local state
       setRoomId(null);
@@ -369,14 +499,126 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
       setIsHost(false);
       setOpponent(null);
       setGameState(null);
+      setCurrentPlayerName(null);
     } catch (error) {
       console.error('Error leaving room:', error);
+    } finally {
+      setIsCleaningUp(false);
     }
-  }, [roomId, unsubscribeFromRoom]);
+  }, [roomId, unsubscribeFromRoom, isCleaningUp]);
+
+  // Helper function to cleanup room data
+  const cleanupRoom = async (roomIdToClean: string) => {
+    if (isCleaningUpRef.current) {
+      console.log('Cleanup already in progress for room:', roomIdToClean);
+      return;
+    }
+
+    try {
+      console.log('Cleaning up room data for:', roomIdToClean);
+      
+      // Delete game state first (due to foreign key constraint)
+      const { error: gameStateError } = await supabase
+        .from('game_states')
+        .delete()
+        .eq('room_id', roomIdToClean);
+      
+      if (gameStateError) {
+        console.error('Error deleting game state:', gameStateError);
+      } else {
+        console.log('Game state deleted successfully for room:', roomIdToClean);
+      }
+
+      // Delete room
+      const { error: roomError } = await supabase
+        .from('rooms')
+        .delete()
+        .eq('id', roomIdToClean);
+      
+      if (roomError) {
+        console.error('Error deleting room:', roomError);
+      } else {
+        console.log('Room deleted successfully:', roomIdToClean);
+      }
+    } catch (error) {
+      console.error('Error in cleanupRoom:', error);
+    }
+  };
+
+  // Function to cleanup abandoned rooms (rooms older than 30 minutes)
+  const cleanupAbandonedRooms = useCallback(async () => {
+    try {
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      
+      // Find rooms older than 30 minutes
+      const { data: oldRooms, error: fetchError } = await supabase
+        .from('rooms')
+        .select('id')
+        .lt('created_at', thirtyMinutesAgo);
+      
+      if (fetchError) {
+        console.error('Error fetching old rooms:', fetchError);
+        return;
+      }
+
+      if (oldRooms && oldRooms.length > 0) {
+        console.log(`Found ${oldRooms.length} abandoned rooms to cleanup`);
+        
+        // Cleanup each abandoned room
+        for (const room of oldRooms) {
+          await cleanupRoom(room.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning up abandoned rooms:', error);
+    }
+  }, []);
+
+  // Periodically cleanup abandoned rooms (every 10 minutes)
+  useEffect(() => {
+    // Initial cleanup
+    cleanupAbandonedRooms();
+    
+    // Setup periodic cleanup
+    const cleanupInterval = setInterval(cleanupAbandonedRooms, 10 * 60 * 1000); // Every 10 minutes
+    
+    return () => {
+      clearInterval(cleanupInterval);
+    };
+  }, [cleanupAbandonedRooms]);
 
   const makeMove = useCallback(async (row: number, col: number) => {
     if (!roomId || !gameState || !playerRole) {
       return;
+    }
+
+    // Safety mechanisms: Clear auto-restart state if it's stuck
+    if (isAutoRestarting) {
+      // Safety 1: if game is not actually over but auto-restart is true, clear it
+      if (!gameState.gameOver && autoRestartTimeoutRef.current) {
+        console.log('Game is not over but auto-restart is active, clearing auto-restart state');
+        setIsAutoRestarting(false);
+        if (autoRestartTimeoutRef.current) {
+          clearTimeout(autoRestartTimeoutRef.current);
+          autoRestartTimeoutRef.current = null;
+        }
+        // Don't return, let the move proceed
+      }
+      // Safety 2: if it's a fresh game (moveCount 0) but auto-restart is stuck, clear it
+      else if (!gameState.gameOver && gameState.moveCount === 0) {
+        console.log('Fresh game detected but auto-restart is stuck, clearing auto-restart state');
+        setIsAutoRestarting(false);
+        if (autoRestartTimeoutRef.current) {
+          clearTimeout(autoRestartTimeoutRef.current);
+          autoRestartTimeoutRef.current = null;
+        }
+        // Don't return, let the move proceed
+      }
+      // Only block if it's a legitimate auto-restart (game is over)
+      else if (gameState.gameOver) {
+        console.log('Move blocked: legitimate auto-restart in progress (game is over)');
+        return;
+      }
     }
 
     // Check if it's player's turn
@@ -407,6 +649,8 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           winner: newGameState.winner,
           winning_line: newGameState.winningLine,
           scores: newGameState.scores,
+          turn_start_time: newGameState.turnStartTime?.toISOString() || null,
+          turn_time_limit: newGameState.turnTimeLimit,
           updated_at: new Date().toISOString()
         })
         .eq('room_id', roomId);
@@ -421,17 +665,29 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
       console.error('Error making move:', error);
       throw error;
     }
-  }, [roomId, gameState, playerRole]);
+  }, [roomId, gameState, playerRole, isAutoRestarting]);
 
   const resetGame = useCallback(async () => {
     if (!roomId || !isHost) return;
 
     try {
+      console.log('Starting game reset...');
+
       const newGameState = initializeGameState();
       // Preserve scores from current game
       if (gameState) {
         newGameState.scores = gameState.scores;
       }
+
+      console.log('New game state created:', { 
+        moveCount: newGameState.moveCount, 
+        gameOver: newGameState.gameOver,
+        winner: newGameState.winner,
+        scores: newGameState.scores 
+      });
+
+      // Update local state immediately for responsive UI
+      setGameState(newGameState);
 
       const { error } = await supabase
         .from('game_states')
@@ -443,27 +699,92 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
           winner: newGameState.winner,
           winning_line: newGameState.winningLine,
           scores: newGameState.scores,
+          turn_start_time: newGameState.turnStartTime?.toISOString() || null,
+          turn_time_limit: newGameState.turnTimeLimit,
           updated_at: new Date().toISOString()
         })
         .eq('room_id', roomId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database update failed during reset:', error);
+        throw error;
+      }
 
-      console.log(`Game reset in room ${roomId}`);
+      // Clear auto-restart state only after successful database update
+      console.log('Game reset completed, clearing auto-restart state');
+      setIsAutoRestarting(false);
+
+      console.log(`Game reset completed in room ${roomId}`);
     } catch (error) {
       console.error('Error resetting game:', error);
       throw error;
     }
   }, [roomId, isHost, gameState]);
 
+  const onTurnTimeout = useCallback(async () => {
+    if (!roomId || !gameState || !playerRole) return;
+
+    try {
+      // Handle timeout - current player loses
+      const newGameState = handleTimeout(gameState, gameState.currentPlayer);
+      
+      // Update local state immediately
+      setGameState(newGameState);
+
+      // Update database
+      const { error } = await supabase
+        .from('game_states')
+        .update({
+          board: newGameState.board,
+          current_player: newGameState.currentPlayer,
+          move_count: newGameState.moveCount,
+          game_over: newGameState.gameOver,
+          winner: newGameState.winner,
+          winning_line: newGameState.winningLine,
+          scores: newGameState.scores,
+          turn_start_time: newGameState.turnStartTime?.toISOString() || null,
+          turn_time_limit: newGameState.turnTimeLimit,
+          updated_at: new Date().toISOString()
+        })
+        .eq('room_id', roomId);
+
+      if (error) {
+        console.error('Database update failed on timeout:', error);
+        // Revert local state if database update fails
+        setGameState(gameState);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error handling timeout:', error);
+      throw error;
+    }
+  }, [roomId, gameState, playerRole]);
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
+      // Cleanup room data when component unmounts
+      const cleanup = async () => {
+        if (roomIdRef.current && !isCleaningUpRef.current) {
+          console.log('Component unmounting, cleaning up room:', roomIdRef.current);
+          await cleanupRoom(roomIdRef.current);
+        }
+      };
+
+      // Cleanup real-time subscriptions
       if (roomChannel) {
         supabase.removeChannel(roomChannel);
       }
       if (roomCheckInterval) {
         clearInterval(roomCheckInterval);
+      }
+      if (autoRestartTimeoutRef.current) {
+        clearTimeout(autoRestartTimeoutRef.current);
+      }
+
+      // Perform async cleanup only if not already cleaning up
+      if (!isCleaningUpRef.current) {
+        cleanup();
       }
     };
   }, []);
@@ -475,13 +796,16 @@ export const SupabaseMultiplayerProvider: React.FC<SupabaseMultiplayerProviderPr
     playerRole,
     isHost,
     opponent,
+    currentPlayerName,
     gameState,
     createRoom,
     joinRoom,
     leaveRoom,
     makeMove,
     resetGame,
+    onTurnTimeout,
     connectionStatus,
+    isAutoRestarting,
   };
 
   return (

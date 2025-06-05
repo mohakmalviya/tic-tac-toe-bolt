@@ -1,18 +1,42 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView, Switch, TouchableOpacity } from 'react-native';
-import { COLORS, FONTS, SHADOWS, SIZES } from '@/constants/theme';
-import { Volume2, Volume1, VolumeX, Moon, Sun, CircleHelp as HelpCircle, Settings, Gamepad2, Palette, Trash2 } from 'lucide-react-native';
+import { StyleSheet, Text, View, SafeAreaView, ScrollView, Switch, TouchableOpacity, Alert, Linking } from 'react-native';
+import { FONTS, SHADOWS, SIZES } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { 
+  Volume2, 
+  Volume1, 
+  VolumeX, 
+  Palette, 
+  Trash2, 
+  Settings, 
+  Gamepad2, 
+  CircleHelp as HelpCircle, 
+  Info, 
+  Share2, 
+  Star,
+  Trophy,
+  Zap,
+  Shield,
+  Github,
+  ExternalLink
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function SettingsScreen() {
+  const { theme, isDark } = useTheme();
   const { handleResetAll } = useGame();
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundVolume, setSoundVolume] = useState('medium'); // 'off', 'low', 'medium', 'high'
-  const [darkMode, setDarkMode] = useState(false);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
   
   const toggleSound = () => setSoundEnabled(prev => !prev);
-  const toggleDarkMode = () => setDarkMode(prev => !prev);
+  const toggleVibration = () => setVibrationEnabled(prev => !prev);
+  const toggleAutoSave = () => setAutoSaveEnabled(prev => !prev);
+  const toggleAnimations = () => setAnimationsEnabled(prev => !prev);
   
   const handleVolumeChange = (volume: string) => {
     setSoundVolume(volume);
@@ -22,200 +46,326 @@ export default function SettingsScreen() {
       setSoundEnabled(true);
     }
   };
+
+  const handleResetStats = () => {
+    Alert.alert(
+      "Reset Statistics",
+      "Are you sure you want to reset all game statistics? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Reset", style: "destructive", onPress: handleResetAll }
+      ]
+    );
+  };
+
+  const handleShareApp = () => {
+    Alert.alert(
+      "Share App",
+      "Share this amazing Tic Tac Toe Bolt game with your friends!",
+      [{ text: "OK" }]
+    );
+  };
+
+  const handleRateApp = () => {
+    Alert.alert(
+      "Rate App",
+      "Enjoying the game? Please rate us in the app store!",
+      [{ text: "Maybe Later" }, { text: "Rate Now", style: "default" }]
+    );
+  };
+
+  const handleGitHub = async () => {
+    const githubUrl = 'https://github.com/mohakmalviya/tic-tac-toe-bolt';
+    try {
+      const supported = await Linking.canOpenURL(githubUrl);
+      if (supported) {
+        await Linking.openURL(githubUrl);
+      } else {
+        Alert.alert(
+          "GitHub Repository",
+          "⭐ Star us on GitHub!\n\nhttps://github.com/mohakmalviya/tic-tac-toe-bolt",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        "GitHub Repository",
+        "⭐ Star us on GitHub!\n\nhttps://github.com/mohakmalviya/tic-tac-toe-bolt",
+        [{ text: "OK" }]
+      );
+    }
+  };
+
+  // Dynamic gradient colors based on theme
+  const backgroundGradient = isDark 
+    ? [theme.background, theme.backgroundSecondary, theme.backgroundTertiary]
+    : ['#ECFCCB', '#FDF2F8', '#E0F2FE', '#F3E8FF']; // Lime -> Pink -> Cyan -> Purple
+
+  const cardGradient = isDark
+    ? [theme.cardBackground, theme.backgroundSecondary]
+    : [theme.cardBackground, theme.backgroundSecondary];
   
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <LinearGradient
-        colors={['#FEFEFE', '#F8FAFC', '#F1F5F9']}
+        colors={backgroundGradient}
         style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Header */}
+          {/* Enhanced Header */}
           <View style={styles.header}>
-            <View style={styles.headerIcon}>
-              <Settings size={32} color={COLORS.warning} />
+            <View style={[styles.headerIcon, { 
+              backgroundColor: theme.primary + '20',
+              borderColor: theme.primary + '30'
+            }]}>
+              <Settings size={32} color={theme.primary} />
             </View>
-            <Text style={styles.title}>Settings</Text>
-            <Text style={styles.subtitle}>Customize your game experience</Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Settings</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Customize your game experience</Text>
           </View>
           
-          {/* Sound Settings Card */}
-          <View style={styles.card}>
-            <LinearGradient
-              colors={[COLORS.white, '#F8FAFC']}
-              style={styles.cardGradient}
-            >
+          {/* Sound & Haptics Settings Card */}
+          <View style={[styles.card, { 
+            shadowColor: isDark ? theme.black : theme.shadowPiece,
+            backgroundColor: theme.cardBackground 
+          }]}>
+            <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Volume2 size={24} color={COLORS.primary} />
+                <View style={[styles.cardIcon, { backgroundColor: theme.primary + '20' }]}>
+                  <Volume2 size={24} color={theme.primary} />
                 </View>
-                <Text style={styles.sectionTitle}>Audio</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Audio & Haptics</Text>
               </View>
               
               <View style={styles.settingRow}>
-                <Text style={styles.settingLabel}>Sound Effects</Text>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Sound Effects</Text>
+                  <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Play sounds for moves and wins</Text>
+                </View>
                 <Switch
                   value={soundEnabled}
                   onValueChange={toggleSound}
-                  trackColor={{ false: COLORS.backgroundDark, true: COLORS.primary + '40' }}
-                  thumbColor={soundEnabled ? COLORS.primary : COLORS.textSecondary}
-                  ios_backgroundColor={COLORS.backgroundDark}
+                  trackColor={{ false: theme.border, true: theme.primary + '40' }}
+                  thumbColor={soundEnabled ? theme.primary : theme.textSecondary}
+                  ios_backgroundColor={theme.border}
+                />
+              </View>
+              
+              <View style={styles.settingRow}>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Vibration</Text>
+                  <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Haptic feedback for interactions</Text>
+                </View>
+                <Switch
+                  value={vibrationEnabled}
+                  onValueChange={toggleVibration}
+                  trackColor={{ false: theme.border, true: theme.primary + '40' }}
+                  thumbColor={vibrationEnabled ? theme.primary : theme.textSecondary}
+                  ios_backgroundColor={theme.border}
                 />
               </View>
               
               <View style={styles.volumeSection}>
-                <Text style={styles.settingLabel}>Volume Level</Text>
+                <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Volume Level</Text>
                 <View style={styles.volumeControls}>
                   <TouchableOpacity
                     style={[
                       styles.volumeButton,
-                      soundVolume === 'off' && styles.volumeButtonActive
+                      { 
+                        backgroundColor: soundVolume === 'off' ? theme.primary : theme.surfaceElevated,
+                        borderColor: soundVolume === 'off' ? theme.primary : theme.border,
+                      }
                     ]}
                     onPress={() => handleVolumeChange('off')}
                   >
                     <VolumeX
                       size={20}
-                      color={soundVolume === 'off' ? COLORS.white : COLORS.textPrimary}
+                      color={soundVolume === 'off' ? theme.textInverse : theme.textPrimary}
                     />
                   </TouchableOpacity>
                   
                   <TouchableOpacity
                     style={[
                       styles.volumeButton,
-                      soundVolume === 'low' && styles.volumeButtonActive
+                      { 
+                        backgroundColor: soundVolume === 'low' ? theme.primary : theme.surfaceElevated,
+                        borderColor: soundVolume === 'low' ? theme.primary : theme.border,
+                      }
                     ]}
                     onPress={() => handleVolumeChange('low')}
                   >
                     <Volume1
                       size={20}
-                      color={soundVolume === 'low' ? COLORS.white : COLORS.textPrimary}
+                      color={soundVolume === 'low' ? theme.textInverse : theme.textPrimary}
                     />
                   </TouchableOpacity>
                   
                   <TouchableOpacity
                     style={[
                       styles.volumeButton,
-                      soundVolume === 'medium' && styles.volumeButtonActive
+                      { 
+                        backgroundColor: soundVolume === 'medium' ? theme.primary : theme.surfaceElevated,
+                        borderColor: soundVolume === 'medium' ? theme.primary : theme.border,
+                      }
                     ]}
                     onPress={() => handleVolumeChange('medium')}
                   >
                     <Volume2
                       size={20}
-                      color={soundVolume === 'medium' ? COLORS.white : COLORS.textPrimary}
+                      color={soundVolume === 'medium' ? theme.textInverse : theme.textPrimary}
                     />
                   </TouchableOpacity>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </View>
           
-          {/* Display Settings Card */}
-          <View style={styles.card}>
-            <LinearGradient
-              colors={[COLORS.white, '#F8FAFC']}
-              style={styles.cardGradient}
-            >
+          {/* Display & Performance Settings Card */}
+          <View style={[styles.card, { 
+            shadowColor: isDark ? theme.black : theme.shadowPiece,
+            backgroundColor: theme.cardBackground 
+          }]}>
+            <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
-                <View style={[styles.cardIcon, { backgroundColor: COLORS.secondary + '20' }]}>
-                  <Palette size={24} color={COLORS.secondary} />
+                <View style={[styles.cardIcon, { backgroundColor: theme.secondary + '20' }]}>
+                  <Palette size={24} color={theme.secondary} />
                 </View>
-                <Text style={styles.sectionTitle}>Appearance</Text>
-              </View>
-              
-              <View style={styles.settingRow}>
-                <Text style={styles.settingLabel}>Dark Mode</Text>
-                <Switch
-                  value={darkMode}
-                  onValueChange={toggleDarkMode}
-                  trackColor={{ false: COLORS.backgroundDark, true: COLORS.secondary + '40' }}
-                  thumbColor={darkMode ? COLORS.secondary : COLORS.textSecondary}
-                  ios_backgroundColor={COLORS.backgroundDark}
-                />
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Display & Performance</Text>
               </View>
               
               <View style={styles.themeSection}>
-                <Text style={styles.settingLabel}>Theme Selection</Text>
-                <View style={styles.themeRow}>
-                  <TouchableOpacity
-                    style={[
-                      styles.themeButton,
-                      !darkMode && styles.themeButtonActive
-                    ]}
-                    onPress={() => setDarkMode(false)}
-                  >
-                    <Sun
-                      size={20}
-                      color={!darkMode ? COLORS.white : COLORS.textPrimary}
-                    />
-                    <Text
-                      style={[
-                        styles.themeButtonText,
-                        !darkMode && styles.themeButtonActiveText
-                      ]}
-                    >
-                      Light
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={[
-                      styles.themeButton,
-                      darkMode && styles.themeButtonActive
-                    ]}
-                    onPress={() => setDarkMode(true)}
-                  >
-                    <Moon
-                      size={20}
-                      color={darkMode ? COLORS.white : COLORS.textPrimary}
-                    />
-                    <Text
-                      style={[
-                        styles.themeButtonText,
-                        darkMode && styles.themeButtonActiveText
-                      ]}
-                    >
-                      Dark
-                    </Text>
-                  </TouchableOpacity>
+                <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Theme Selection</Text>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Choose your preferred appearance</Text>
+                <View style={styles.themeToggleContainer}>
+                  <ThemeToggle showLabels={true} size="medium" />
                 </View>
               </View>
-            </LinearGradient>
-          </View>
-          
-          {/* Game Settings Card */}
-          <View style={styles.card}>
-            <LinearGradient
-              colors={[COLORS.white, '#F8FAFC']}
-              style={styles.cardGradient}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.cardIcon, { backgroundColor: COLORS.warning + '20' }]}>
-                  <Gamepad2 size={24} color={COLORS.warning} />
+
+              <View style={styles.settingRow}>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Animations</Text>
+                  <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Enable smooth transitions and effects</Text>
                 </View>
-                <Text style={styles.sectionTitle}>Game Data</Text>
+                <Switch
+                  value={animationsEnabled}
+                  onValueChange={toggleAnimations}
+                  trackColor={{ false: theme.border, true: theme.secondary + '40' }}
+                  thumbColor={animationsEnabled ? theme.secondary : theme.textSecondary}
+                  ios_backgroundColor={theme.border}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Game Settings Card */}
+          <View style={[styles.card, { 
+            shadowColor: isDark ? theme.black : theme.shadowPiece,
+            backgroundColor: theme.cardBackground 
+          }]}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIcon, { backgroundColor: theme.warning + '20' }]}>
+                  <Gamepad2 size={24} color={theme.warning} />
+                </View>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Game Settings</Text>
+              </View>
+
+              <View style={styles.settingRow}>
+                <View style={styles.settingInfo}>
+                  <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Auto Save</Text>
+                  <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Automatically save game progress</Text>
+                </View>
+                <Switch
+                  value={autoSaveEnabled}
+                  onValueChange={toggleAutoSave}
+                  trackColor={{ false: theme.border, true: theme.warning + '40' }}
+                  thumbColor={autoSaveEnabled ? theme.warning : theme.textSecondary}
+                  ios_backgroundColor={theme.border}
+                />
               </View>
               
               <TouchableOpacity 
-                style={styles.resetButton}
-                onPress={handleResetAll}
+                style={[styles.resetButton, { 
+                  backgroundColor: theme.error + '15',
+                  borderColor: theme.error + '30',
+                }]}
+                onPress={handleResetStats}
               >
-                <Trash2 size={20} color={COLORS.white} />
-                <Text style={styles.resetButtonText}>Reset Game Statistics</Text>
+                <Trash2 size={20} color={theme.error} />
+                <Text style={[styles.resetButtonText, { color: theme.error }]}>Reset Game Statistics</Text>
               </TouchableOpacity>
               
-              <View style={styles.noteContainer}>
-                <HelpCircle size={18} color={COLORS.textSecondary} />
-                <Text style={styles.noteText}>
-                  This will reset all scores and game history permanently
+              <View style={[styles.noteContainer, {
+                backgroundColor: theme.warning + '10',
+                borderLeftColor: theme.warning,
+              }]}>
+                <HelpCircle size={18} color={theme.warning} />
+                <Text style={[styles.noteText, { color: theme.textSecondary }]}>
+                  This will permanently delete all scores and game history
                 </Text>
               </View>
-            </LinearGradient>
+            </View>
+          </View>
+
+          {/* App & Support Card */}
+          <View style={[styles.card, { 
+            shadowColor: isDark ? theme.black : theme.shadowPiece,
+            backgroundColor: theme.cardBackground 
+          }]}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIcon, { backgroundColor: theme.success + '20' }]}>
+                  <Star size={24} color={theme.success} />
+                </View>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>App & Support</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: theme.success + '15' }]}
+                onPress={handleRateApp}
+              >
+                <Star size={20} color={theme.success} />
+                <View style={styles.actionButtonText}>
+                  <Text style={[styles.actionButtonTitle, { color: theme.success }]}>Rate App</Text>
+                  <Text style={[styles.actionButtonSubtitle, { color: theme.textSecondary }]}>Help us improve with your feedback</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: theme.textPrimary + '15' }]}
+                onPress={handleGitHub}
+              >
+                <Github size={20} color={theme.textPrimary} />
+                <View style={styles.actionButtonText}>
+                  <Text style={[styles.actionButtonTitle, { color: theme.textPrimary }]}>⭐ Star on GitHub</Text>
+                  <Text style={[styles.actionButtonSubtitle, { color: theme.textSecondary }]}>Support the project and contribute</Text>
+                </View>
+                <ExternalLink size={16} color={theme.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: theme.primary + '15' }]}
+                onPress={handleShareApp}
+              >
+                <Share2 size={20} color={theme.primary} />
+                <View style={styles.actionButtonText}>
+                  <Text style={[styles.actionButtonTitle, { color: theme.primary }]}>Share App</Text>
+                  <Text style={[styles.actionButtonSubtitle, { color: theme.textSecondary }]}>Share with friends and family</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
           
-          {/* Footer */}
+          {/* Enhanced Footer */}
           <View style={styles.footer}>
-            <Text style={styles.versionText}>Tic-Tac-Toe Special Edition</Text>
-            <Text style={styles.versionNumber}>Version 1.0.0</Text>
+            <View style={[styles.footerIcon, { backgroundColor: theme.primary + '20' }]}>
+              <Trophy size={20} color={theme.primary} />
+            </View>
+            <Text style={[styles.versionText, { color: theme.textPrimary }]}>Tic Tac Toe Bolt</Text>
+            <Text style={[styles.versionNumber, { color: theme.textSecondary }]}>Version 1.0.0</Text>
+            <Text style={[styles.footerSubtext, { color: theme.textSecondary }]}>Made with ❤️ for strategic gaming</Text>
           </View>
         </ScrollView>
       </LinearGradient>
@@ -243,40 +393,34 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SIZES.medium,
-    shadowColor: COLORS.warning,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
     borderWidth: 2,
-    borderColor: '#FEF3C7',
   },
   title: {
     fontFamily: FONTS.bold,
     fontSize: 28,
-    color: COLORS.textPrimary,
     marginBottom: SIZES.xSmall,
   },
   subtitle: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.textSecondary,
   },
   card: {
     marginBottom: SIZES.large,
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
   },
-  cardGradient: {
+  cardContent: {
     padding: SIZES.large,
   },
   cardHeader: {
@@ -288,7 +432,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SIZES.medium,
@@ -296,7 +439,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.medium,
-    color: COLORS.textPrimary,
     flex: 1,
   },
   settingRow: {
@@ -305,10 +447,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SIZES.medium,
   },
+  settingInfo: {
+    flex: 1,
+  },
   settingLabel: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.textPrimary,
+  },
+  settingDescription: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.xSmall,
+    flex: 1,
+    lineHeight: 18,
   },
   volumeSection: {
     marginTop: SIZES.small,
@@ -320,7 +470,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   volumeButton: {
-    backgroundColor: COLORS.backgroundDark,
     padding: SIZES.small,
     borderRadius: 8,
     alignItems: 'center',
@@ -328,57 +477,15 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  volumeButtonActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
   },
   themeSection: {
     marginTop: SIZES.small,
+    marginBottom: SIZES.medium,
   },
-  themeRow: {
-    flexDirection: 'row',
+  themeToggleContainer: {
     marginTop: SIZES.small,
-    gap: SIZES.small,
-  },
-  themeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.backgroundDark,
-    padding: SIZES.small,
-    borderRadius: 12,
-    flex: 1,
-    gap: SIZES.xSmall,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    minHeight: 48,
-  },
-  themeButtonActive: {
-    backgroundColor: COLORS.secondary,
-    borderColor: COLORS.secondary,
-    shadowColor: COLORS.secondary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  themeButtonText: {
-    fontFamily: FONTS.medium,
-    fontSize: SIZES.small,
-    color: COLORS.textPrimary,
-  },
-  themeButtonActiveText: {
-    color: COLORS.white,
   },
   resetButton: {
-    backgroundColor: COLORS.error,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -386,31 +493,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: SIZES.small,
     marginBottom: SIZES.medium,
-    shadowColor: COLORS.error,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    borderWidth: 1,
   },
   resetButtonText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.small,
-    color: COLORS.white,
   },
   noteContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.warning + '10',
     borderRadius: 8,
     padding: SIZES.small,
     gap: SIZES.small,
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.warning,
   },
   noteText: {
     fontFamily: FONTS.regular,
     fontSize: SIZES.xSmall,
-    color: COLORS.textSecondary,
     flex: 1,
     lineHeight: 18,
   },
@@ -419,15 +518,45 @@ const styles = StyleSheet.create({
     marginTop: SIZES.large,
     paddingVertical: SIZES.medium,
   },
+  footerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SIZES.medium,
+  },
   versionText: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.small,
-    color: COLORS.textPrimary,
     marginBottom: SIZES.xSmall,
   },
   versionNumber: {
     fontFamily: FONTS.regular,
     fontSize: SIZES.xSmall,
-    color: COLORS.textSecondary,
+  },
+  footerSubtext: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.xSmall,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SIZES.medium,
+    borderRadius: 12,
+    gap: SIZES.small,
+    marginBottom: SIZES.medium,
+  },
+  actionButtonText: {
+    flex: 1,
+  },
+  actionButtonTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.small,
+  },
+  actionButtonSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.xSmall,
   },
 });

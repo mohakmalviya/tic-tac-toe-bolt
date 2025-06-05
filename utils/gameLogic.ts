@@ -22,9 +22,10 @@ export const initializeGameState = (): GameState => {
     winningLine: null,
     scores: {
       X: 0,
-      O: 0,
-      draws: 0
-    }
+      O: 0
+    },
+    turnStartTime: undefined, // Timer starts on first move
+    turnTimeLimit: 15 // 15 seconds per turn
   };
 };
 
@@ -82,6 +83,12 @@ export const makeMove = (gameState: GameState, row: number, col: number): GameSt
 
   // Create a deep copy of the game state
   const newGameState = JSON.parse(JSON.stringify(gameState)) as GameState;
+  
+  // Fix Date objects that got converted to strings during JSON serialization
+  if (newGameState.turnStartTime && typeof newGameState.turnStartTime === 'string') {
+    newGameState.turnStartTime = new Date(newGameState.turnStartTime);
+  }
+  
   const { board, currentPlayer, moveCount } = newGameState;
   
   // FIRST: Remove current player's own shadowed pieces before placing new piece
@@ -108,6 +115,11 @@ export const makeMove = (gameState: GameState, row: number, col: number): GameSt
   
   // Increment move count
   newGameState.moveCount++;
+  
+  // Start timer on first move
+  if (newGameState.moveCount === 1) {
+    newGameState.turnStartTime = new Date();
+  }
   
   // THIRD: Handle special rule - Shadow opponent's oldest piece when current player reaches 3 pieces AND opponent already has 3 pieces
   const allCells: CellState[] = [];
@@ -162,16 +174,33 @@ export const makeMove = (gameState: GameState, row: number, col: number): GameSt
     newGameState.winningLine = winningLine;
     newGameState.scores[winner]++;
   } 
-  // Check for a draw
-  else if (isBoardFull(board)) {
-    newGameState.gameOver = true;
-    newGameState.winner = 'draw';
-    newGameState.scores.draws++;
-  } 
-  // Switch to the next player
+  // In this special variant, draws are impossible due to the shadowing mechanics
+  // The game continues until someone wins
   else {
     newGameState.currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    // Reset turn timer for the next player
+    newGameState.turnStartTime = new Date();
   }
+  
+  return newGameState;
+};
+
+// Handle timer timeout - opponent wins
+export const handleTimeout = (gameState: GameState, timedOutPlayer: PlayerType): GameState => {
+  const newGameState = JSON.parse(JSON.stringify(gameState)) as GameState;
+  
+  // Fix Date objects that got converted to strings during JSON serialization
+  if (newGameState.turnStartTime && typeof newGameState.turnStartTime === 'string') {
+    newGameState.turnStartTime = new Date(newGameState.turnStartTime);
+  }
+  
+  const winner = timedOutPlayer === 'X' ? 'O' : 'X';
+  
+  newGameState.gameOver = true;
+  newGameState.winner = winner;
+  newGameState.scores[winner]++;
+  newGameState.winningLine = null; // No winning line for timeout
+  newGameState.turnStartTime = new Date(); // Set current time for database consistency
   
   return newGameState;
 };

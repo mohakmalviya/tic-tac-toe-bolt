@@ -18,21 +18,17 @@ const GameBoard: React.FC = () => {
   const { gameState: localGameState, handleCellPress: localHandleCellPress } = useGame();
   const { gameState: multiplayerGameState, makeMove: multiplayerMakeMove, roomId, opponent } = useSupabaseMultiplayer();
 
-  // Use multiplayer game state if we're in a room, otherwise use local
   const gameState = roomId && multiplayerGameState ? multiplayerGameState : localGameState;
   const handleCellPress = roomId ? multiplayerMakeMove : localHandleCellPress;
   
   const { board, winner, winningLine } = gameState;
 
-  // Animation values
   const boardScale = useSharedValue(0.9);
   const boardOpacity = useSharedValue(0);
   const glowIntensity = useSharedValue(0);
-
   const isMultiplayer = !!(roomId && opponent);
 
   useEffect(() => {
-    // Entrance animation
     boardScale.value = withSequence(
       withTiming(0.9, { duration: 0 }),
       withTiming(1.05, { duration: 400, easing: Easing.out(Easing.back()) }),
@@ -42,7 +38,6 @@ const GameBoard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Glow effect for multiplayer
     if (isMultiplayer) {
       glowIntensity.value = withSequence(
         withTiming(1, { duration: 1000 }),
@@ -72,29 +67,24 @@ const GameBoard: React.FC = () => {
   return (
     <View style={styles.boardContainer}>
       <Animated.View style={[styles.boardWrapper, animatedBoardStyle]}>
-        {/* Outer glow effect for multiplayer */}
         {isMultiplayer && (
           <Animated.View style={[styles.outerGlow, animatedGlowStyle]} />
         )}
-        
-        {/* Main board gradient */}
         <LinearGradient
           colors={
             isMultiplayer 
-              ? ['#F0F9FF', '#E0F2FE', '#FEFEFE'] // Cool blue tint for multiplayer
-              : [COLORS.white, '#F8FAFC', '#F1F5F9'] // Warm tint for local
+              ? ['#F0F9FF', '#E0F2FE', '#FEFEFE']
+              : [COLORS.white, '#F8FAFC', '#F1F5F9']
           }
           style={gradientStyle}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* Inner shadow/depth effect */}
           <View style={styles.boardInner}>
             <LinearGradient
               colors={['rgba(0,0,0,0.02)', 'transparent', 'rgba(0,0,0,0.01)']}
               style={styles.innerShadow}
             />
-            
             <View style={styles.board}>
               {board.map((row, rowIndex) => (
                 <View key={`row-${rowIndex}`} style={styles.row}>
@@ -110,16 +100,12 @@ const GameBoard: React.FC = () => {
                   ))}
                 </View>
               ))}
-              
-              {/* Show winning line when there's a winner */}
-              {winner && winner !== 'draw' && winningLine && (
+              {winner && winningLine && (
                 <WinningLine winningPositions={winningLine} winner={winner} />
               )}
             </View>
           </View>
         </LinearGradient>
-
-        {/* Decorative elements for multiplayer */}
         {isMultiplayer && (
           <>
             <View style={styles.cornerAccent1} />
@@ -137,7 +123,7 @@ const styles = StyleSheet.create({
   boardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: SIZES.boardMargin,
+    padding: SIZES.small, // This was SIZES.boardMargin then reduced to SIZES.small
     position: 'relative',
   },
   boardWrapper: {
@@ -157,7 +143,7 @@ const styles = StyleSheet.create({
   },
   boardGradient: {
     borderRadius: 20,
-    padding: 12,
+    padding: 12, // This was a direct number, SIZES.small is 12
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
