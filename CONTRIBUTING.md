@@ -268,6 +268,16 @@ Before submitting a PR, ensure:
    - Verify timezone handling
    - Test with multiple devices
 
+4. **Metro Bundler Issues**:
+   - Clear cache with `npx expo start --clear`
+   - If you get "Property doesn't exist" errors, restart with cleared cache
+   - For plugin resolution errors, check if packages are listed correctly in `app.json`
+
+5. **Dependency Issues**:
+   - Run `npx expo install --fix` to update packages to compatible versions
+   - Remove packages from plugins array in `app.json` if they're not config plugins
+   - Clear node_modules and reinstall: `rm -rf node_modules package-lock.json && npm install`
+
 ### Support Channels
 - Create an issue for bugs or feature requests
 - Check existing issues for similar problems
