@@ -9,7 +9,7 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ||
 
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
                        Constants.expoConfig?.extra?.supabaseAnonKey || 
-                       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwaGltYXVheHVndWF6dm9ibW1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4ODg3NDEsImV4cCI6MjA2NDQ2NDc0MX0.B_7vQGXtWM5buRnMAfDFSQnQ2gLyiWq83ft__oEdh8I';
+                       'YOUR_SUPABASE_ANON_KEY';
 
 // Always log environment variable status (even in production for debugging)
 console.log('🔧 Supabase Environment Check:', {
