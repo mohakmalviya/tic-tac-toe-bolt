@@ -3,15 +3,56 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, FONTS, SHADOWS, SIZES } from '@/constants/theme';
 import { RefreshCw, RotateCcw } from 'lucide-react-native';
 import { useGame } from '@/contexts/GameContext';
+import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
 
-const GameControls: React.FC = () => {
+type GameMode = 'local' | 'multiplayer';
+
+interface GameControlsProps {
+  gameMode: GameMode;
+}
+
+const GameControls: React.FC<GameControlsProps> = ({ gameMode }) => {
   const { handleResetGame, handleResetAll } = useGame();
+  const { resetGame: resetMultiplayerGame, isHost } = useSupabaseMultiplayer();
   
+  const handleNewGame = async () => {
+    if (gameMode === 'multiplayer') {
+      try {
+        await resetMultiplayerGame();
+      } catch (error) {
+        console.error('Error resetting multiplayer game:', error);
+      }
+    } else {
+      handleResetGame();
+    }
+  };
+
+  const handleResetAllScores = () => {
+    if (gameMode === 'local') {
+      handleResetAll();
+    }
+    // In multiplayer, we don't allow resetting all scores through the client
+  };
+
+  // In multiplayer mode, don't show any buttons - games auto-restart
+  if (gameMode === 'multiplayer') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.autoRestartInfo}>
+          <Text style={styles.infoText}>
+            Games restart automatically after someone wins
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Local mode - show both buttons
   return (
     <View style={styles.container}>
       <TouchableOpacity 
         style={styles.button} 
-        onPress={handleResetGame}
+        onPress={handleNewGame}
         activeOpacity={0.8}
       >
         <RefreshCw size={20} color={COLORS.white} />
@@ -20,7 +61,7 @@ const GameControls: React.FC = () => {
       
       <TouchableOpacity 
         style={[styles.button, styles.secondaryButton]} 
-        onPress={handleResetAll}
+        onPress={handleResetAllScores}
         activeOpacity={0.8}
       >
         <RotateCcw size={20} color={COLORS.primary} />
@@ -37,7 +78,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: SIZES.medium,
-    marginTop: SIZES.large,
   },
   button: {
     flexDirection: 'row',
@@ -62,6 +102,28 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: COLORS.primary,
+  },
+  waitingContainer: {
+    paddingVertical: SIZES.medium,
+    paddingHorizontal: SIZES.large,
+  },
+  waitingText: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.small,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  autoRestartInfo: {
+    paddingVertical: SIZES.xSmall,
+    paddingHorizontal: SIZES.large,
+  },
+  infoText: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.small,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

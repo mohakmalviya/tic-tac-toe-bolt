@@ -1,0 +1,125 @@
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { FONTS, SIZES, COLORS } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { router } from 'expo-router';
+import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
+import { AlertTriangle, X } from 'lucide-react-native';
+
+interface OpponentLeftCardProps {
+  onLeave: () => void;
+}
+
+const OpponentLeftCard: React.FC<OpponentLeftCardProps> = ({ onLeave }) => {
+  const { theme, isDark } = useTheme();
+  const { isWaitingForOpponent } = useSupabaseMultiplayer();
+  const [showCard, setShowCard] = useState(true);
+  
+  const handleContinueWaiting = () => {
+    setShowCard(false);
+  };
+
+  if (!isWaitingForOpponent || !showCard) {
+    return null;
+  }
+
+  return (
+    <View style={styles.overlay}>
+      <View style={[styles.card, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
+        <View style={styles.iconContainer}>
+          <AlertTriangle size={36} color={theme.warning} />
+        </View>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          Opponent Left
+        </Text>
+        <Text style={[styles.message, { color: theme.textSecondary }]}>
+          Your opponent has left the game. You can wait for a new player to join or leave the game.
+        </Text>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: theme.error + '20', borderColor: theme.error }]} 
+            onPress={onLeave}
+          >
+            <X size={18} color={theme.error} />
+            <Text style={[styles.buttonText, { color: theme.error }]}>Leave Game</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.waitButton, { backgroundColor: theme.secondary + '20', borderColor: theme.secondary }]}
+            onPress={handleContinueWaiting}
+          >
+            <Text style={[styles.buttonText, { color: theme.secondary }]}>Continue Waiting</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  card: {
+    width: '80%',
+    padding: SIZES.medium,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  iconContainer: {
+    marginBottom: SIZES.small,
+  },
+  title: {
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.large,
+    marginVertical: SIZES.small,
+    textAlign: 'center',
+  },
+  message: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.medium,
+    marginBottom: SIZES.medium,
+    textAlign: 'center',
+  },
+  buttonsContainer: {
+    width: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: SIZES.small,
+    marginTop: SIZES.small,
+  },
+  button: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SIZES.medium,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: SIZES.xSmall,
+  },
+  waitButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SIZES.medium,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  buttonText: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.medium,
+  },
+});
+
+export default OpponentLeftCard;
