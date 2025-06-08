@@ -4,16 +4,22 @@ import { Gamepad2, CircleHelp as HelpCircle, Settings } from 'lucide-react-nativ
 import { FONTS } from '@/constants/theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import { GameProvider } from '@/contexts/GameContext';
+import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
 
 function TabLayoutContent() {
   const { theme } = useTheme();
-
+  const { roomId, opponent, gameState } = useSupabaseMultiplayer();
+  
+  // Hide tabs when in an active multiplayer match
+  // Show tabs when: not in a room, or in a room but no opponent and no active game
+  const shouldHideTabs = roomId && (opponent || (gameState && !gameState.gameOver));
+  
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.textSecondary,
-        tabBarStyle: [styles.tabBar, { 
+        tabBarStyle: shouldHideTabs ? { display: 'none' } : [styles.tabBar, { 
           backgroundColor: theme.tabBackground,
           borderTopColor: theme.border,
         }],

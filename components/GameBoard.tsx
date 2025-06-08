@@ -28,6 +28,8 @@ const GameBoard: React.FC = () => {
   const boardOpacity = useSharedValue(0);
   const glowIntensity = useSharedValue(0);
   const isMultiplayer = !!(roomId && opponent);
+  // Always show enhanced styling for both local and multiplayer
+  const showMultiplayerStyling = true;
 
   useEffect(() => {
     boardScale.value = withSequence(
@@ -39,16 +41,13 @@ const GameBoard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (isMultiplayer) {
-      glowIntensity.value = withSequence(
-        withTiming(1, { duration: 1000 }),
-        withTiming(0.7, { duration: 1000 }),
-        withTiming(1, { duration: 1000 })
-      );
-    } else {
-      glowIntensity.value = withTiming(0, { duration: 300 });
-    }
-  }, [isMultiplayer]);
+    // Always show glow effect for both local and multiplayer
+    glowIntensity.value = withSequence(
+      withTiming(1, { duration: 1000 }),
+      withTiming(0.7, { duration: 1000 }),
+      withTiming(1, { duration: 1000 })
+    );
+  }, []);
 
   const animatedBoardStyle = useAnimatedStyle(() => ({
     transform: [{ scale: boardScale.value }],
@@ -62,18 +61,18 @@ const GameBoard: React.FC = () => {
 
   const gradientStyle = [
     styles.boardGradient,
-    isMultiplayer && styles.multiplayerGradient,
+    showMultiplayerStyling && styles.multiplayerGradient,
   ].filter(Boolean);
 
   return (
     <View style={styles.boardContainer}>
       <Animated.View style={[styles.boardWrapper, animatedBoardStyle]}>
-        {isMultiplayer && (
+        {showMultiplayerStyling && (
           <Animated.View style={[styles.outerGlow, animatedGlowStyle]} />
         )}
         <LinearGradient
           colors={
-            isMultiplayer 
+            showMultiplayerStyling 
               ? ['#F0F9FF', '#E0F2FE', '#FEFEFE']
               : [COLORS.white, '#F8FAFC', '#F1F5F9']
           }
@@ -108,7 +107,7 @@ const GameBoard: React.FC = () => {
             </View>
           </View>
         </LinearGradient>
-        {isMultiplayer && (
+        {showMultiplayerStyling && (
           <>
             <View style={styles.cornerAccent1} />
             <View style={styles.cornerAccent2} />

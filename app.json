@@ -1,12 +1,16 @@
 {
   "expo": {
-    "name": "Tic Tac Toe Bolt",
-    "slug": "tic-tac-toe",
+    "name": "Tic-Tac-Toe Bolt",
+    "slug": "tic-tac-toe-bolt",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tictactoe",
+    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -17,7 +21,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tictactoebolt",
+      "bundleIdentifier": "com.senkuu.tictactoebolt",
       "infoPlist": {
         "UIBackgroundModes": [
           "background-fetch"
@@ -25,15 +29,15 @@
       }
     },
     "android": {
-      "package": "com.tictactoebolt",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#3B82F6"
+      },
+      "package": "com.senkuu.tictactoebolt",
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE"
-      ],
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0F172A"
-      }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -52,7 +56,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "ea55a603-04e3-42a7-8a2e-5b9dad496a33"
+        "projectId": "0878350b-d7a7-4b00-8d79-fb862c9a0e39"
       }
     },
     "owner": "senkuu"
