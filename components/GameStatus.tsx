@@ -1,101 +1,83 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { COLORS, FONTS, SIZES } from '@/constants/theme';
-import { X, Circle } from 'lucide-react-native';
+import { FONTS, SIZES } from '@/constants/theme';
 import { useGame } from '@/contexts/GameContext';
+import { useSupabaseMultiplayer } from '@/contexts/SupabaseMultiplayerContext';
 
-const GameStatus: React.FC = () => {
-  const { gameState } = useGame();
-  const { currentPlayer, gameOver, winner, scores } = gameState;
+interface GameStatusProps {
+  // No props needed if it just reads from context
+}
+
+const cleanPlayerName = (name: string): string => {
+  if (!name) return '';
+  // Remove any version of the [RANDOM] tag with case insensitivity and global flag
+  return name.replace(/\[RANDOM\][\s]*/gi, '');
+};
+
+const GameStatus: React.FC<GameStatusProps> = () => {
+  const { gameState: localGameState } = useGame();
+  const { 
+    gameState: multiplayerGameState, 
+    roomId, 
+    playerRole, 
+    opponent,
+    isAutoRestarting,
+    currentPlayerName
+  } = useSupabaseMultiplayer();
+
+  const gameState = roomId && multiplayerGameState ? multiplayerGameState : localGameState;
+  const { currentPlayer, gameOver, winner } = gameState;
   
-  const getStatusMessage = () => {
+  // Check if this is a random match
+  const isRandomMatch = currentPlayerName?.includes('[RANDOM]') || 
+                        opponent?.name?.includes('[RANDOM]');
+  
+  const getStatusMessage = (): string => {
     if (gameOver) {
-      if (winner === 'draw') {
-        return "It's a draw!";
+      if (roomId && playerRole) {
+        if (isAutoRestarting) {
+          return winner === playerRole ? "You win! New game starting..." : 
+                 (gameState.winningLine ? "You lose! New game starting..." : "You lose! (Time's up) New game starting...");
+        }
+        return winner === playerRole ? "You win! New game in 5s..." : 
+               (gameState.winningLine ? "You lose! New game in 5s..." : "You lose! (Time's up) New game in 5s...");
       } else {
         return `Player ${winner} wins!`;
       }
     } else {
-      return `Player ${currentPlayer}'s turn`;
+      if (roomId) {
+        if (!opponent) {
+          // Special message for random matchmaking when waiting
+          if (isRandomMatch) {
+            return "Random matchmaking - Waiting for new opponent...";
+          }
+          return "Waiting for opponent...";
+        }
+        if (gameState.moveCount === 0) {
+          if (isAutoRestarting) {
+            return "New game started!";
+          }
+          return currentPlayer === playerRole ? "Your turn - Make the first move!" : 
+                 `Waiting for ${opponent ? cleanPlayerName(opponent.name) : 'opponent'} to start...`;
+        }
+        return currentPlayer === playerRole ? "Your turn" : 
+               `${opponent ? cleanPlayerName(opponent.name) : 'Opponent'}'s turn`;
+      } else {
+        return `Player ${currentPlayer}'s turn`;
+      }
     }
   };
   
   return (
-    <View style={styles.container}>
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusText}>{getStatusMessage()}</Text>
-        {!gameOver && (
-          <View style={styles.currentPlayerIcon}>
-            {currentPlayer === 'X' ? (
-              <X color={COLORS.xColor} size={24} />
-            ) : (
-              <Circle color={COLORS.oColor} size={24} />
-            )}
-          </View>
-        )}
-      </View>
-      
-      <View style={styles.scoreContainer}>
-        <View style={styles.scoreBox}>
-          <X color={COLORS.xColor} size={20} />
-          <Text style={styles.scoreText}>{scores.X}</Text>
-        </View>
-        
-        <View style={styles.scoreBox}>
-          <Text style={styles.scoreText}>Draws</Text>
-          <Text style={styles.scoreText}>{scores.draws}</Text>
-        </View>
-        
-        <View style={styles.scoreBox}>
-          <Circle color={COLORS.oColor} size={20} />
-          <Text style={styles.scoreText}>{scores.O}</Text>
-        </View>
-      </View>
-    </View>
+    <Text style={styles.statusText}>{getStatusMessage()}</Text>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: SIZES.large,
-    alignItems: 'center',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SIZES.medium,
-  },
   statusText: {
-    fontSize: SIZES.large,
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-    marginRight: SIZES.small,
-  },
-  currentPlayerIcon: {
-    marginLeft: SIZES.small,
-  },
-  scoreContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: SIZES.xLarge,
-    marginTop: SIZES.medium,
-  },
-  scoreBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.backgroundDark,
-    padding: SIZES.small,
-    borderRadius: 8,
-    minWidth: 70,
-    ...SHADOWS.small,
-  },
-  scoreText: {
-    fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
-    color: COLORS.textPrimary,
-    marginTop: 4,
+    fontFamily: FONTS.bold,
+    textAlign: 'center',
   },
 });
 

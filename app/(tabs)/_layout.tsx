@@ -1,15 +1,22 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
-import { TowerControl as GameController, CircleHelp as HelpCircle, Settings } from 'lucide-react-native';
-import { COLORS, FONTS } from '@/constants/theme';
+import { Gamepad2, CircleHelp as HelpCircle, Settings } from 'lucide-react-native';
+import { FONTS } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { GameProvider } from '@/contexts/GameContext';
 
-export default function TabLayout() {
+function TabLayoutContent() {
+  const { theme } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
-        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarStyle: [styles.tabBar, { 
+          backgroundColor: theme.tabBackground,
+          borderTopColor: theme.border,
+        }],
         tabBarLabelStyle: styles.tabBarLabel,
         headerShown: false,
       }}>
@@ -18,8 +25,20 @@ export default function TabLayout() {
         options={{
           title: 'Game',
           tabBarIcon: ({ color, size }) => (
-            <GameController color={color} size={size} />
+            <Gamepad2 color={color} size={size} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="local-game"
+        options={{
+          href: null, // This hides it from the tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="multiplayer"
+        options={{
+          href: null, // This hides it from the tab bar
         }}
       />
       <Tabs.Screen
@@ -44,10 +63,16 @@ export default function TabLayout() {
   );
 }
 
+export default function TabLayout() {
+  return (
+    <GameProvider>
+      <TabLayoutContent />
+    </GameProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: COLORS.white,
-    borderTopColor: COLORS.border,
     height: 60,
     paddingBottom: 8,
     paddingTop: 8,

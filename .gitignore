@@ -6,6 +6,8 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+android/
+ios/
 
 # native
 *.orig.*
@@ -30,6 +32,7 @@ yarn-error.*
 # local env files
 .env*.local
 .env
+.cursorignore
 
 # typescript
 *.tsbuildinfo
