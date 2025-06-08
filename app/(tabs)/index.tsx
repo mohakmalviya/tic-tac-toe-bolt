@@ -1,15 +1,84 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, Dimensions } from 'react-native';
 import { FONTS, SIZES, SHADOWS } from '@/constants/theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import { router } from 'expo-router';
-import { Users, Smartphone, Sparkles, Play, Zap } from 'lucide-react-native';
+import { Users, Smartphone, Sparkles, Play, Zap, Star, Heart } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  withRepeat,
+  withSequence,
+  Easing,
+  interpolate,
+  withDelay
+} from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const { theme, isDark } = useTheme();
+
+  // Animation values
+  const logoScale = useSharedValue(1);
+  const logoRotation = useSharedValue(0);
+  const sparkleRotation = useSharedValue(0);
+  const floatingElements = useSharedValue(0);
+  const gameButtonsPulse = useSharedValue(1);
+  const featureGlow = useSharedValue(0);
+  const dotsAnimation = useSharedValue(0);
+
+  useEffect(() => {
+    // Logo breathing animation
+    logoScale.value = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 2500, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+
+    // Sparkle rotation
+    sparkleRotation.value = withRepeat(
+      withTiming(360, { duration: 4000, easing: Easing.linear }),
+      -1
+    );
+
+    // Floating elements animation
+    floatingElements.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 6000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 6000, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+
+    // Game buttons pulse
+    gameButtonsPulse.value = withRepeat(
+      withSequence(
+        withTiming(1.02, { duration: 3000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 3000, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+
+    // Feature section glow
+    featureGlow.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 4000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.3, { duration: 4000, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+
+    // Footer dots sequential animation
+    dotsAnimation.value = withRepeat(
+      withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.sin) }),
+      -1
+    );
+  }, []);
 
   const navigateToLocalGame = () => {
     router.push('/local-game');
@@ -36,6 +105,66 @@ export default function HomeScreen() {
     ? [theme.cardBackground, theme.backgroundSecondary]
     : [theme.white, '#F8FAFC'];
 
+  // Animated styles
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const sparkleAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${sparkleRotation.value}deg` }],
+  }));
+
+  const floatingStyle1 = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(floatingElements.value, [0, 1], [0, -15]) },
+      { translateX: interpolate(floatingElements.value, [0, 1], [0, 8]) },
+      { rotate: `${floatingElements.value * 20}deg` }
+    ],
+    opacity: 0.4 + (floatingElements.value * 0.6),
+  }));
+
+  const floatingStyle2 = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(floatingElements.value, [0, 1], [0, 12]) },
+      { translateX: interpolate(floatingElements.value, [0, 1], [0, -6]) },
+      { rotate: `${-floatingElements.value * 15}deg` }
+    ],
+    opacity: 0.3 + (floatingElements.value * 0.7),
+  }));
+
+  const floatingStyle3 = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(floatingElements.value, [0, 1], [0, -10]) },
+      { translateX: interpolate(floatingElements.value, [0, 1], [0, 4]) },
+      { rotate: `${floatingElements.value * 12}deg` }
+    ],
+    opacity: 0.5 + (floatingElements.value * 0.5),
+  }));
+
+  const gameButtonsAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: gameButtonsPulse.value }],
+  }));
+
+  const featureGlowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: 0.1 + (featureGlow.value * 0.15),
+    elevation: 4 + (featureGlow.value * 6),
+  }));
+
+  const dot1Style = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + (Math.sin(dotsAnimation.value * 2 * Math.PI) * 0.3) }],
+    opacity: 0.7 + (Math.sin(dotsAnimation.value * 2 * Math.PI) * 0.3),
+  }));
+
+  const dot2Style = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + (Math.sin((dotsAnimation.value + 0.33) * 2 * Math.PI) * 0.3) }],
+    opacity: 0.7 + (Math.sin((dotsAnimation.value + 0.33) * 2 * Math.PI) * 0.3),
+  }));
+
+  const dot3Style = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + (Math.sin((dotsAnimation.value + 0.66) * 2 * Math.PI) * 0.3) }],
+    opacity: 0.7 + (Math.sin((dotsAnimation.value + 0.66) * 2 * Math.PI) * 0.3),
+  }));
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Background Gradient */}
@@ -45,17 +174,30 @@ export default function HomeScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
+        {/* Floating decorative elements */}
+        <Animated.View style={[styles.floatingElement1, floatingStyle1]}>
+          <Star size={16} color={theme.primary + '60'} />
+        </Animated.View>
+        <Animated.View style={[styles.floatingElement2, floatingStyle2]}>
+          <Heart size={14} color={theme.secondary + '70'} />
+        </Animated.View>
+        <Animated.View style={[styles.floatingElement3, floatingStyle3]}>
+          <Sparkles size={12} color={theme.warning + '80'} />
+        </Animated.View>
+
         <View style={styles.content}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
             <View style={styles.logoContainer}>
-              <View style={[styles.logoBackground, { 
+              <Animated.View style={[styles.logoBackground, logoAnimatedStyle, { 
                 backgroundColor: theme.cardBackground,
                 borderColor: isDark ? theme.border : '#FEF3C7',
                 shadowColor: theme.warning,
               }]}>
-                <Sparkles size={40} color={theme.warning} />
-              </View>
+                <Animated.View style={sparkleAnimatedStyle}>
+                  <Sparkles size={40} color={theme.warning} />
+                </Animated.View>
+              </Animated.View>
             </View>
             
             <View style={styles.titleContainer}>
@@ -79,69 +221,73 @@ export default function HomeScreen() {
           
           {/* Game Modes Section */}
           <View style={styles.gameModesSection}>
-            <TouchableOpacity 
-              style={[styles.gameModeButton, styles.localGameButton]} 
-              onPress={navigateToLocalGame}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={localGameGradient}
-                style={styles.gradientBackground}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+            <Animated.View style={gameButtonsAnimatedStyle}>
+              <TouchableOpacity 
+                style={[styles.gameModeButton, styles.localGameButton]} 
+                onPress={navigateToLocalGame}
+                activeOpacity={0.85}
               >
-                <View style={styles.buttonContent}>
-                  <View style={styles.iconWrapper}>
-                    <View style={styles.iconBackground}>
-                      <Smartphone size={32} color={theme.white} />
+                <LinearGradient
+                  colors={localGameGradient}
+                  style={styles.gradientBackground}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <View style={styles.buttonContent}>
+                    <View style={styles.iconWrapper}>
+                      <View style={styles.iconBackground}>
+                        <Smartphone size={32} color={theme.white} />
+                      </View>
+                    </View>
+                    <View style={styles.textWrapper}>
+                      <Text style={[styles.gameModeTitle, { color: theme.white }]}>Local Game</Text>
+                      <Text style={[styles.gameModeDescription, { color: theme.white, opacity: 0.9 }]}>
+                        Pass & play with friends on same device
+                      </Text>
+                    </View>
+                    <View style={styles.playIcon}>
+                      <Play size={20} color={theme.white} fill={theme.white} />
                     </View>
                   </View>
-                  <View style={styles.textWrapper}>
-                    <Text style={[styles.gameModeTitle, { color: theme.white }]}>Local Game</Text>
-                    <Text style={[styles.gameModeDescription, { color: theme.white, opacity: 0.9 }]}>
-                      Pass & play with friends on same device
-                    </Text>
-                  </View>
-                  <View style={styles.playIcon}>
-                    <Play size={20} color={theme.white} fill={theme.white} />
-                  </View>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
 
-            <TouchableOpacity 
-              style={[styles.gameModeButton, styles.multiplayerButton]} 
-              onPress={navigateToMultiplayer}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={multiplayerGradient}
-                style={styles.gradientBackground}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+            <Animated.View style={gameButtonsAnimatedStyle}>
+              <TouchableOpacity 
+                style={[styles.gameModeButton, styles.multiplayerButton]} 
+                onPress={navigateToMultiplayer}
+                activeOpacity={0.85}
               >
-                <View style={styles.buttonContent}>
-                  <View style={styles.iconWrapper}>
-                    <View style={styles.iconBackground}>
-                      <Users size={32} color={theme.white} />
+                <LinearGradient
+                  colors={multiplayerGradient}
+                  style={styles.gradientBackground}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <View style={styles.buttonContent}>
+                    <View style={styles.iconWrapper}>
+                      <View style={styles.iconBackground}>
+                        <Users size={32} color={theme.white} />
+                      </View>
+                    </View>
+                    <View style={styles.textWrapper}>
+                      <Text style={[styles.gameModeTitle, { color: theme.white }]}>Multiplayer</Text>
+                      <Text style={[styles.gameModeDescription, { color: theme.white, opacity: 0.9 }]}>
+                        Play online with friends using room codes
+                      </Text>
+                    </View>
+                    <View style={styles.playIcon}>
+                      <Zap size={20} color={theme.white} fill={theme.white} />
                     </View>
                   </View>
-                  <View style={styles.textWrapper}>
-                    <Text style={[styles.gameModeTitle, { color: theme.white }]}>Multiplayer</Text>
-                    <Text style={[styles.gameModeDescription, { color: theme.white, opacity: 0.9 }]}>
-                      Play online with friends using room codes
-                    </Text>
-                  </View>
-                  <View style={styles.playIcon}>
-                    <Zap size={20} color={theme.white} fill={theme.white} />
-                  </View>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
 
           {/* Feature Section */}
-          <View style={styles.featureSection}>
+          <Animated.View style={[styles.featureSection, featureGlowStyle]}>
             <LinearGradient
               colors={featureGradient}
               style={styles.featureGradient}
@@ -162,7 +308,7 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </LinearGradient>
-          </View>
+          </Animated.View>
 
           {/* Footer */}
           <View style={styles.footer}>
@@ -170,9 +316,9 @@ export default function HomeScreen() {
               Ready to challenge your strategic thinking?
             </Text>
             <View style={styles.footerDots}>
-              <View style={[styles.dot, { backgroundColor: theme.primary }]} />
-              <View style={[styles.dot, { backgroundColor: theme.secondary }]} />
-              <View style={[styles.dot, { backgroundColor: theme.warning }]} />
+              <Animated.View style={[styles.dot, { backgroundColor: theme.primary }, dot1Style]} />
+              <Animated.View style={[styles.dot, { backgroundColor: theme.secondary }, dot2Style]} />
+              <Animated.View style={[styles.dot, { backgroundColor: theme.warning }, dot3Style]} />
             </View>
           </View>
         </View>
@@ -361,5 +507,23 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  floatingElement1: {
+    position: 'absolute',
+    top: '15%',
+    right: '10%',
+    zIndex: 1,
+  },
+  floatingElement2: {
+    position: 'absolute',
+    top: '40%',
+    left: '8%',
+    zIndex: 1,
+  },
+  floatingElement3: {
+    position: 'absolute',
+    bottom: '25%',
+    right: '15%',
+    zIndex: 1,
   },
 });

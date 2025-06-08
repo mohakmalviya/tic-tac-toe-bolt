@@ -19,7 +19,7 @@ ios/
 
 # metro
 .metro-health-check*
-
+.cursorignore
 # debug
 npm-debug.*
 yarn-debug.*
