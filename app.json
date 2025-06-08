@@ -44,14 +44,10 @@
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
-<<<<<<< HEAD
-    "plugins": ["expo-router", "expo-font"],
-=======
     "plugins": [
       "expo-router",
       "expo-font"
     ],
->>>>>>> 02ac2b9184dd4cf1443278e8d89121ab618e859c
     "experiments": {
       "typedRoutes": true
     },
