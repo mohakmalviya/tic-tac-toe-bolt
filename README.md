@@ -10,7 +10,7 @@ A modern, feature-rich Tic-Tac-Toe game built with React Native and Expo. This i
 - **Strategic Depth**: Plan your moves considering future piece removals
 
 ### Multiplayer Support
-- **Real-time multiplayer** using Socket.io
+- **Real-time multiplayer** using Supabase Realtime
 - **Room-based gameplay** with 6-character room codes
 - **Cross-platform** - play with friends on any device
 - **Local and online modes** available
@@ -44,23 +44,32 @@ A modern, feature-rich Tic-Tac-Toe game built with React Native and Expo. This i
 - Node.js (v16 or higher)
 - Expo CLI (`npm install -g expo-cli`)
 - Mobile device with Expo Go app or Android/iOS simulator
+- Supabase account (for multiplayer features)
 
-### Running the Game
+### Setup Environment Variables
 
-#### 1. Start the Multiplayer Server
+1. **Create a `.env` file** in the project root:
 ```bash
-# In the project root directory
-node server.js
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
-The server will start on `http://localhost:3001`
 
-#### 2. Start the Mobile App
+2. **Get your Supabase credentials**:
+   - Create a project at [supabase.com](https://supabase.com)
+   - Go to Settings → API
+   - Copy your Project URL and anon key
+
+### Running the App
+
 ```bash
-# In another terminal
+# Install dependencies
+npm install
+
+# Start the development server
 npx expo start
 ```
 
-#### 3. Open the App
+### Open the App
 - **Mobile**: Scan the QR code with Expo Go
 - **Web**: Press `w` to open in browser
 - **Android Emulator**: Press `a`
@@ -99,9 +108,9 @@ npx expo start
 
 ### Architecture
 - **Frontend**: React Native with Expo
-- **Backend**: Node.js with Express and Socket.io
+- **Backend**: Supabase (PostgreSQL + Realtime)
 - **State Management**: React Context API
-- **Real-time Communication**: WebSockets
+- **Real-time Communication**: Supabase Realtime subscriptions
 
 ### Project Structure
 ```
@@ -111,7 +120,7 @@ npx expo start
 ├── types/               # TypeScript type definitions
 ├── utils/              # Game logic utilities
 ├── constants/         # Theme and styling constants
-└── server.js         # Multiplayer server
+└── utils/supabase.ts  # Supabase client configuration
 ```
 
 ### Key Components
@@ -126,12 +135,13 @@ npx expo start
 - **Unique Room Codes**: 6-character alphanumeric codes
 - **Host Controls**: Room creator can start new games
 - **Player Identification**: Clear "You" vs "Opponent" labeling
-- **Real-time Updates**: Instant move synchronization
+- **Real-time Updates**: Instant move synchronization via Supabase Realtime
 
 ### Connection Handling
-- **Auto-reconnection**: Handles network interruptions
+- **Automatic Connection**: Connects to Supabase automatically
 - **Connection Status**: Visual indicators for connection state
 - **Error Handling**: User-friendly error messages
+- **Offline Support**: Local gameplay always available
 
 ## 🎨 UI/UX Features
 
@@ -142,23 +152,34 @@ npx expo start
 
 ## 🐛 Troubleshooting
 
-### Server Issues
+### Supabase Connection Issues
 ```bash
-# If port 3001 is in use:
-lsof -ti:3001 | xargs kill -9
-node server.js
+# Check your environment variables
+cat .env
+
+# Restart the development server
+npx expo start --clear
 ```
 
-### Connection Problems
-- Ensure server is running on port 3001
-- Check firewall settings for port 3001
-- For production, update `SERVER_URL` in `MultiplayerContext.tsx`
+### Environment Variables
+- Ensure your `.env` file has correct Supabase URL and anon key
+- Check that environment variables start with `EXPO_PUBLIC_`
+- Verify your Supabase project is active and accessible
 
 ### App Won't Start
 ```bash
 # Clear cache and restart
 npx expo start --clear
+
+# Reset dependencies if needed
+rm -rf node_modules
+npm install
 ```
+
+### Multiplayer Not Working
+- Verify Supabase credentials in `.env` file
+- Check Supabase dashboard for project status
+- Ensure real-time features are enabled in your Supabase project
 
 ## 🤝 Contributing
 
@@ -170,4 +191,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**Made with ❤️ using React Native and Expo**
+**Made with ❤️ using React Native, Expo, and Supabase**
