@@ -2,9 +2,9 @@
   "expo": {
     "name": "Tic-Tac-Toe Bolt",
     "slug": "tic-tac-toe-bolt",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/logo1.jpg",
+    "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "platforms": [
@@ -30,7 +30,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo1.jpg",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#3B82F6"
       },
       "package": "com.senkuu.tictactoebolt",
@@ -42,7 +42,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/logo1.jpg"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
