@@ -1,84 +1,5 @@
 # Tic-Tac-Toe Bolt 🎮
 
-<<<<<<< HEAD
-A modern, real-time multiplayer Tic-Tac-Toe game built with React Native and Expo, featuring beautiful animations, turn-based timers, and seamless multiplayer gameplay.
-
-## 🌟 Features
-
-### Core Gameplay
-- **Real-time Multiplayer**: Play with friends or random opponents in real-time
-- **Turn Timer**: 15-second turn limit keeps games moving
-- **Score Tracking**: Persistent score tracking across multiple rounds
-- **Auto-restart**: Games automatically restart after completion
-- **Responsive Design**: Optimized for various screen sizes and devices
-
-### Multiplayer Modes
-- **Create Room**: Host a game and share the room code with friends
-- **Join Room**: Enter a room code to join an existing game
-- **Random Matchmaking**: Get matched with random opponents instantly
-- **Opponent Management**: Smart handling of opponent connections and disconnections
-
-### UI/UX Features
-- **Beautiful Animations**: Smooth card flips, winning line animations, and transitions
-- **Modern Design**: Clean, intuitive interface with gradient backgrounds
-- **Dynamic Status**: Real-time game status updates and notifications
-- **Device Optimization**: Specially optimized for various Android and iOS devices
-
-## 🎯 How to Play
-
-### Multiplayer
-1. **Host a Game**:
-   - Enter your name
-   - Click "Create Room"
-   - Share the room code with your friend
-
-2. **Join a Game**:
-   - Enter your name
-   - Input the room code
-   - Click "Join Room"
-
-3. **Random Match**:
-   - Enter your name
-   - Click "Find Random Opponent"
-   - Get matched instantly with another player
-
-### Game Rules
-- Players take turns placing X's and O's on a 3x3 grid
-- First player to get three symbols in a row (horizontally, vertically, or diagonally) wins
-- Each turn has a 15-second time limit
-- If time runs out, the current player automatically loses
-- Games automatically restart after completion
-
-## 🚀 Quick Start
-
-```bash
-# Clone and install
-git clone <repository-url>
-cd tic-tac-toe-bolt
-npm install
-
-# Start development server
-npx expo start
-```
-
-For detailed setup instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## 📱 Screenshots
-
-*Coming soon...*
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup instructions and contribution guidelines.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-**Made with ❤️ using React Native and Expo**
-=======
 A modern, feature-rich Tic-Tac-Toe game built with React Native and Expo. This isn't your ordinary Tic-Tac-Toe - it features innovative gameplay mechanics, beautiful theming, and both local and online multiplayer modes.
 
 ## 🌟 Features
@@ -93,6 +14,29 @@ A modern, feature-rich Tic-Tac-Toe game built with React Native and Expo. This i
 - **Room-based gameplay** with 6-character room codes
 - **Cross-platform** - play with friends on any device
 - **Local and online modes** available
+
+### Core Gameplay
+- **Real-time Multiplayer**: Play with friends or random opponents in real-time
+- **Turn Timer**: 15-second turn limit keeps games moving
+- **Score Tracking**: Persistent score tracking across multiple rounds
+- **Auto-restart**: Games automatically restart after completion
+- **Responsive Design**: Optimized for various screen sizes and devices
+
+### UI/UX Features
+- **Beautiful Animations**: Smooth card flips, winning line animations, and transitions
+- **Modern Design**: Clean, intuitive interface with gradient backgrounds
+- **Dynamic Status**: Real-time game status updates and notifications
+- **Device Optimization**: Specially optimized for various Android and iOS devices
+
+## 📱 Screenshots
+
+<div align="center">
+  <img src="./assets/images/Screenshot_20250609_113328_Tic-Tac-Toe Bolt.jpg" alt="Game Board View" width="300"/>
+  <img src="./assets/images/Screenshot_20250609_113414_Tic-Tac-Toe Bolt.jpg" alt="Multiplayer Lobby" width="300"/>
+  <img src="./assets/images/Screenshot_20250609_113443_Tic-Tac-Toe Bolt.jpg" alt="Game In Progress" width="300"/>
+</div>
+
+*Game screenshots showing the modern UI, multiplayer lobby, and gameplay*
 
 ## 🚀 Quick Start
 
@@ -137,6 +81,19 @@ npx expo start
 3. **Join Room**: Enter your name and a 6-character room code
 4. Share the room code with your friend
 5. Play in real-time with the same rules as local mode!
+
+### Multiplayer Modes
+- **Create Room**: Host a game and share the room code with friends
+- **Join Room**: Enter a room code to join an existing game
+- **Random Matchmaking**: Get matched with random opponents instantly
+- **Opponent Management**: Smart handling of opponent connections and disconnections
+
+### Game Rules
+- Players take turns placing X's and O's on a 3x3 grid
+- First player to get three symbols in a row (horizontally, vertically, or diagonally) wins
+- Each turn has a 15-second time limit
+- If time runs out, the current player automatically loses
+- Games automatically restart after completion
 
 ## 🔧 Technical Details
 
@@ -199,44 +156,18 @@ node server.js
 
 ### App Won't Start
 ```bash
-# Clear Expo cache
-expo start -c
-
-# Reset node modules
-rm -rf node_modules
-npm install
-```
-
-## 🚢 Deployment
-
-### Server Deployment
-1. Deploy server to your preferred platform (Heroku, Railway, etc.)
-2. Update `SERVER_URL` in `contexts/MultiplayerContext.tsx`
-3. Ensure WebSocket support is enabled
-
-### App Deployment
-```bash
-# Build for production
-expo build:android
-expo build:ios
+# Clear cache and restart
+npx expo start --clear
 ```
 
 ## 🤝 Contributing
 
-Feel free to contribute! Some ideas:
-- Add player profiles and avatars
-- Implement spectator mode
-- Add game replay functionality
-- Create tournaments and leaderboards
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup instructions and contribution guidelines.
 
-## 📱 Compatible Platforms
+## 📄 License
 
-- ✅ iOS (Expo Go / Native)
-- ✅ Android (Expo Go / Native)
-- ✅ Web Browser
-- ✅ Cross-platform multiplayer
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-Enjoy playing Tic-Tac-Toe Bolt! 🎉
->>>>>>> 02ac2b9184dd4cf1443278e8d89121ab618e859c
+**Made with ❤️ using React Native and Expo**
