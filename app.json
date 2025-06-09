@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tic-Tac-Toe Bolt",
     "slug": "tic-tac-toe-bolt",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
