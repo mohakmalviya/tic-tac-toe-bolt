@@ -1,23 +1,21 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 
-// 🔑 Supabase configuration with fallbacks
+// 🔑 Supabase configuration - only use environment variables
 // Try multiple sources for environment variables
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
-                   Constants.expoConfig?.extra?.supabaseUrl || 
-                   'https://gphimauaxuguazvobmmc.supabase.co';
+                   Constants.expoConfig?.extra?.supabaseUrl;
 
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
-                       Constants.expoConfig?.extra?.supabaseAnonKey || 
-                       'YOUR_SUPABASE_ANON_KEY';
+                       Constants.expoConfig?.extra?.supabaseAnonKey;
 
 // Always log environment variable status (even in production for debugging)
 console.log('🔧 Supabase Environment Check:', {
   hasUrl: !!supabaseUrl,
   hasKey: !!supabaseAnonKey,
-  urlStartsWith: supabaseUrl.startsWith('https://') ? 'https://' : 'invalid',
-  urlLength: supabaseUrl.length,
-  keyLength: supabaseAnonKey.length,
+  urlStartsWith: supabaseUrl?.startsWith('https://') ? 'https://' : 'invalid',
+  urlLength: supabaseUrl?.length || 0,
+  keyLength: supabaseAnonKey?.length || 0,
   isDev: __DEV__,
   nodeEnv: process.env.NODE_ENV || 'undefined',
   fromProcessEnv: !!(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
@@ -56,7 +54,7 @@ try {
   if (isSupabaseConfigured) {
     console.log('✅ Initializing Supabase with real credentials');
     
-    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
       realtime: {
         params: {
           eventsPerSecond: 10,
@@ -90,7 +88,7 @@ try {
     });
     
     supabase = {
-      from: (table: string) => createMockQueryBuilder('Supabase not configured'),
+      from: (table: string) => createMockQueryBuilder('Supabase not configured - please check environment variables'),
       channel: (name: string) => ({
         on: (event: string, callback: Function) => ({ subscribe: () => {} }),
         subscribe: () => {},
