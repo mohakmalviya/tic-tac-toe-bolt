@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Tic Tac Toe Bolt</string>
+    <string>Tic-Tac-Toe Bolt</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,8 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>tictactoe</string>
-          <string>com.tictactoebolt</string>
+          <string>myapp</string>
+          <string>com.senkuu.tictactoebolt</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+tic-tac-toe-bolt</string>
         </array>
       </dict>
     </array>

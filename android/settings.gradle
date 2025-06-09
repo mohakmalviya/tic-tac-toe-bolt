@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'Tic Tac Toe Bolt'
+rootProject.name = 'Tic-Tac-Toe Bolt'
 
 dependencyResolutionManagement {
   versionCatalogs {

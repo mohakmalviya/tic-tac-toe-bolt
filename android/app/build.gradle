@@ -109,9 +109,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.tictactoebolt'
+    namespace 'com.senkuu.tictactoebolt'
     defaultConfig {
-        applicationId 'com.tictactoebolt'
+        applicationId 'com.senkuu.tictactoebolt'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

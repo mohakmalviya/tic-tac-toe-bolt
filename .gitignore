@@ -6,8 +6,19 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
-android/
-ios/
+
+# android build artifacts
+android/app/build/
+android/build/
+android/.gradle/
+android/gradle.properties.local
+android/local.properties
+
+# ios build artifacts
+ios/build/
+ios/Pods/
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
 
 # native
 *.orig.*

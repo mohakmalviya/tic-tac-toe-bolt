@@ -1,4 +1,4 @@
-package com.tictactoebolt
+package com.senkuu.tictactoebolt
 
 import android.os.Build
 import android.os.Bundle

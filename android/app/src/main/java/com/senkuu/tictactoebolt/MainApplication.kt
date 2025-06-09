@@ -1,4 +1,4 @@
-package com.tictactoebolt
+package com.senkuu.tictactoebolt
 
 import android.app.Application
 import android.content.res.Configuration
