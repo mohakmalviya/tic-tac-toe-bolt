@@ -29,6 +29,7 @@ ios/*.xcodeproj/xcuserdata/
 
 # metro
 .metro-health-check*
+.cursorignore
 # debug
 npm-debug.*
 yarn-debug.*
@@ -41,6 +42,11 @@ yarn-error.*
 # local env files
 .env*.local
 .env
+.cursorignore
 
 # typescript
 *.tsbuildinfo
+
+# social media posts (keep private)
+REDDIT_POST.md
+LINKEDIN_POST.md
