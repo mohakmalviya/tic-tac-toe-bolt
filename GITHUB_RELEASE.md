@@ -1,8 +1,6 @@
-# 🚀 Tic-Tac-Toe Bolt v1.0.3 - Major Update!
+# 🚀 Tic-Tac-Toe Bolt v1.0.0
 
-## ✨ What's New
-
-### 🎨 **Brand New Visual Identity**
+### 🎨 **New Visual Identity**
 - New app logo and splash screen across all platforms
 - Properly formatted icons for Android, iOS, and Web
 - Fresh, modern branding with sleek dark theme
