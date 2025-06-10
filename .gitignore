@@ -46,7 +46,3 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-# social media posts (keep private)
-REDDIT_POST.md
-LINKEDIN_POST.md
