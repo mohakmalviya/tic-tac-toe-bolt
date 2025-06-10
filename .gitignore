@@ -1,6 +1,5 @@
 # dependencies
 node_modules/
-
 # expo
 .expo/
 dist/
@@ -30,7 +29,6 @@ ios/*.xcodeproj/xcuserdata/
 
 # metro
 .metro-health-check*
-.cursorignore
 # debug
 npm-debug.*
 yarn-debug.*
@@ -43,7 +41,6 @@ yarn-error.*
 # local env files
 .env*.local
 .env
-.cursorignore
 
 # typescript
 *.tsbuildinfo
